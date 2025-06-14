@@ -2,6 +2,7 @@
 import { Search, Phone, Users, ShoppingCart, Heart, Home as HomeIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const categories = [
@@ -124,10 +125,10 @@ const Index = () => {
             <span className="text-xs text-gray-400 mt-1">الملف الشخصي</span>
           </div>
           
-          <div className="flex flex-col items-center py-2">
+          <Link to="/cart" className="flex flex-col items-center py-2">
             <ShoppingCart className="w-5 h-5 text-gray-400" />
             <span className="text-xs text-gray-400 mt-1">السلة</span>
-          </div>
+          </Link>
           
           <div className="flex flex-col items-center py-2">
             <Heart className="w-5 h-5 text-gray-400" />
