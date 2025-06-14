@@ -8,16 +8,38 @@ import { wooCommerceService } from "@/services/woocommerce";
 
 const Index = () => {
   // Fetch categories from WooCommerce
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => wooCommerceService.getCategories({ per_page: 18 }),
+    retry: 3,
+    retryDelay: 1000,
   });
 
-  // Fetch featured products from WooCommerce
-  const { data: featuredProducts = [], isLoading: productsLoading } = useQuery({
+  // Fetch all products first, then featured products as fallback
+  const { data: allProducts = [], isLoading: allProductsLoading } = useQuery({
+    queryKey: ['all-products'],
+    queryFn: () => wooCommerceService.getProducts({ per_page: 8 }),
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  // Try to get featured products, but fallback to regular products
+  const { data: featuredProducts = [], isLoading: featuredLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: () => wooCommerceService.getProducts({ per_page: 4, featured: true }),
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Use featured products if available, otherwise use first 4 regular products
+  const productsToShow = featuredProducts.length > 0 ? featuredProducts : allProducts.slice(0, 4);
+  const isProductsLoading = featuredLoading || allProductsLoading;
+
+  console.log('Categories:', categories);
+  console.log('Featured Products:', featuredProducts);
+  console.log('All Products:', allProducts);
+  console.log('Products to Show:', productsToShow);
+  console.log('Categories Error:', categoriesError);
 
   const shortcuts = [
     { name: "كن موردا", icon: "🏪", bgColor: "bg-red-50" },
@@ -91,8 +113,10 @@ const Index = () => {
 
       {/* Featured Products */}
       <div className="px-4 mb-6">
-        <h3 className="text-lg font-bold mb-4 text-right">منتجات مميزة</h3>
-        {productsLoading ? (
+        <h3 className="text-lg font-bold mb-4 text-right">
+          {featuredProducts.length > 0 ? 'منتجات مميزة' : 'منتجات الكتالوج'}
+        </h3>
+        {isProductsLoading ? (
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="bg-white rounded-xl p-4 shadow-sm animate-pulse">
@@ -102,9 +126,9 @@ const Index = () => {
               </div>
             ))}
           </div>
-        ) : (
+        ) : productsToShow.length > 0 ? (
           <div className="grid grid-cols-2 gap-4">
-            {featuredProducts.map((product) => (
+            {productsToShow.map((product) => (
               <Link key={product.id} to={`/product/${product.id}`}>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
@@ -125,6 +149,11 @@ const Index = () => {
                 </div>
               </Link>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">لا توجد منتجات متاحة حالياً</p>
+            <p className="text-sm text-gray-500">يرجى المحاولة لاحقاً أو التحقق من الاتصال بالإنترنت</p>
           </div>
         )}
       </div>
@@ -147,7 +176,7 @@ const Index = () => {
               </div>
             ))}
           </div>
-        ) : (
+        ) : categories.length > 0 ? (
           <div className="grid grid-cols-3 gap-4">
             {categories.map((category) => (
               <div key={category.id} className="bg-white rounded-xl p-4 text-center shadow-sm">
@@ -166,6 +195,11 @@ const Index = () => {
                 <p className="text-xs text-gray-500 mt-1">{category.count} منتج</p>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">لا توجد فئات متاحة حالياً</p>
+            <p className="text-sm text-gray-500">يرجى المحاولة لاحقاً أو التحقق من الاتصال بالإنترنت</p>
           </div>
         )}
       </div>
