@@ -18,6 +18,7 @@ export interface Product {
   sale_price: string;
   description: string;
   short_description: string;
+  sku: string;
   images: Array<{
     id: number;
     src: string;
@@ -31,6 +32,7 @@ export interface Product {
   stock_status: string;
   manage_stock: boolean;
   stock_quantity: number;
+  featured: boolean;
 }
 
 export interface Category {
@@ -82,6 +84,8 @@ class WooCommerceService {
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
     const url = `${WC_BASE_URL}${endpoint}`;
     
+    console.log('Making WooCommerce API request to:', url);
+    
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -91,11 +95,17 @@ class WooCommerceService {
       },
     });
 
+    console.log('WooCommerce API response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('WooCommerce API error:', response.status, errorText);
       throw new Error(`WooCommerce API error: ${response.status}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('WooCommerce API response data:', data);
+    return data;
   }
 
   async getProducts(params: {
@@ -105,6 +115,8 @@ class WooCommerceService {
     search?: string;
     orderby?: string;
     order?: string;
+    featured?: boolean;
+    exclude?: number[];
   } = {}): Promise<Product[]> {
     const searchParams = new URLSearchParams();
     
@@ -114,6 +126,10 @@ class WooCommerceService {
     if (params.search) searchParams.append('search', params.search);
     if (params.orderby) searchParams.append('orderby', params.orderby);
     if (params.order) searchParams.append('order', params.order);
+    if (params.featured) searchParams.append('featured', 'true');
+    if (params.exclude && params.exclude.length > 0) {
+      searchParams.append('exclude', params.exclude.join(','));
+    }
 
     const queryString = searchParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ''}`;

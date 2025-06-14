@@ -3,42 +3,27 @@ import { Search, Phone, Users, ShoppingCart, Heart, Home as HomeIcon } from "luc
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { wooCommerceService } from "@/services/woocommerce";
 
 const Index = () => {
-  const categories = [
-    { id: 1, name: "الأدوات اليدوية", icon: "🔨", image: "/placeholder.svg" },
-    { id: 2, name: "المعدات الصناعية", icon: "⚙️", image: "/placeholder.svg" },
-    { id: 3, name: "المواد الدعائية", icon: "📦", image: "/placeholder.svg" },
-    { id: 4, name: "المنزل والمكتب", icon: "🏠", image: "/placeholder.svg" },
-    { id: 5, name: "تخزين الأدوات", icon: "📋", image: "/placeholder.svg" },
-    { id: 6, name: "أدوات القياس والتخطيط", icon: "📏", image: "/placeholder.svg" },
-    { id: 7, name: "تجهيزات كهربائية", icon: "⚡", image: "/placeholder.svg" },
-    { id: 8, name: "تجهيزات السلامة العامة", icon: "🦺", image: "/placeholder.svg" },
-    { id: 9, name: "الالكترونيات والأجهزة", icon: "💻", image: "/placeholder.svg" },
-    { id: 10, name: "حلول الإنارة", icon: "💡", image: "/placeholder.svg" },
-    { id: 11, name: "التدفئة والتهوية", icon: "🌡️", image: "/placeholder.svg" },
-    { id: 12, name: "قطع السيارات", icon: "🚗", image: "/placeholder.svg" },
-    { id: 13, name: "المعدات الهيدروليكية والرفع", icon: "🏗️", image: "/placeholder.svg" },
-    { id: 14, name: "أنظمة التثبيت", icon: "🔩", image: "/placeholder.svg" },
-    { id: 15, name: "مولدات الطاقة", icon: "⚡", image: "/placeholder.svg" },
-    { id: 16, name: "المواد العازلة واللاصقة", icon: "🧲", image: "/placeholder.svg" },
-    { id: 17, name: "المنتجات الخارجية والحديقة", icon: "🌿", image: "/placeholder.svg" },
-    { id: 18, name: "الزيوت والكيماويات", icon: "🧪", image: "/placeholder.svg" }
-  ];
+  // Fetch categories from WooCommerce
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => wooCommerceService.getCategories({ per_page: 18 }),
+  });
+
+  // Fetch featured products from WooCommerce
+  const { data: featuredProducts = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['featured-products'],
+    queryFn: () => wooCommerceService.getProducts({ per_page: 4, featured: true }),
+  });
 
   const shortcuts = [
     { name: "كن موردا", icon: "🏪", bgColor: "bg-red-50" },
     { name: "طلب المشتريات", icon: "🛍️", bgColor: "bg-red-50" },
     { name: "قائمة التسعير", icon: "📋", bgColor: "bg-red-50", hasNotification: true },
     { name: "هدايا الأعمال", icon: "🎁", bgColor: "bg-red-50" }
-  ];
-
-  // Sample featured products
-  const featuredProducts = [
-    { id: 1, name: "نظارات حماية يوفكس", price: 12500, image: "/placeholder.svg" },
-    { id: 2, name: "قفازات PVC", price: 2250, image: "/placeholder.svg" },
-    { id: 3, name: "خوذة أمان", price: 15000, image: "/placeholder.svg" },
-    { id: 4, name: "أحذية السلامة", price: 35000, image: "/placeholder.svg" }
   ];
 
   return (
@@ -107,19 +92,41 @@ const Index = () => {
       {/* Featured Products */}
       <div className="px-4 mb-6">
         <h3 className="text-lg font-bold mb-4 text-right">منتجات مميزة</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {featuredProducts.map((product) => (
-            <Link key={product.id} to={`/product/${product.id}`}>
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                  <span className="text-3xl">🔧</span>
-                </div>
-                <h4 className="text-sm font-medium mb-2">{product.name}</h4>
-                <p className="text-lg font-bold text-red-600">IQD {product.price.toLocaleString()}</p>
+        {productsLoading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-4 shadow-sm animate-pulse">
+                <div className="w-full h-32 bg-gray-200 rounded-lg mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-2/3"></div>
               </div>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {featuredProducts.map((product) => (
+              <Link key={product.id} to={`/product/${product.id}`}>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                    {product.images && product.images.length > 0 ? (
+                      <img 
+                        src={product.images[0].src} 
+                        alt={product.images[0].alt || product.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-3xl">🔧</span>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-medium mb-2" dangerouslySetInnerHTML={{ __html: product.name }}></h4>
+                  <p className="text-lg font-bold text-red-600">
+                    IQD {product.price ? parseInt(product.price).toLocaleString() : 'اتصل للسعر'}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Categories Section */}
@@ -131,16 +138,36 @@ const Index = () => {
           <h3 className="text-lg font-bold">تسوق حسب الفئة</h3>
         </div>
         
-        <div className="grid grid-cols-3 gap-4">
-          {categories.map((category) => (
-            <div key={category.id} className="bg-white rounded-xl p-4 text-center shadow-sm">
-              <div className="w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                <span className="text-2xl">{category.icon}</span>
+        {categoriesLoading ? (
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-4 text-center shadow-sm animate-pulse">
+                <div className="w-16 h-16 bg-gray-200 rounded-lg mx-auto mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
               </div>
-              <h4 className="text-sm font-medium text-gray-800 leading-tight">{category.name}</h4>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {categories.map((category) => (
+              <div key={category.id} className="bg-white rounded-xl p-4 text-center shadow-sm">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                  {category.image && category.image.src ? (
+                    <img 
+                      src={category.image.src} 
+                      alt={category.image.alt || category.name}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-2xl">📦</span>
+                  )}
+                </div>
+                <h4 className="text-sm font-medium text-gray-800 leading-tight">{category.name}</h4>
+                <p className="text-xs text-gray-500 mt-1">{category.count} منتج</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}
