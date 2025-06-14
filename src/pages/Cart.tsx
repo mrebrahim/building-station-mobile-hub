@@ -2,29 +2,30 @@
 import { ArrowLeft, Heart, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "PVC Large Gloves",
-      brand: "INGCO العلامة التجارية",
-      price: 1500,
-      quantity: 1,
-      image: "/placeholder.svg"
-    }
-  ]);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Load cart items from localStorage
+    const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    setCartItems(savedCart);
+  }, []);
 
   const removeItem = (id: number) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
+    const updatedCart = cartItems.filter(item => item.id !== id);
+    setCartItems(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
   const updateQuantity = (id: number, quantity: number) => {
-    setCartItems(cartItems.map(item => 
+    const updatedCart = cartItems.map(item => 
       item.id === id ? { ...item, quantity } : item
-    ));
+    );
+    setCartItems(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

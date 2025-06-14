@@ -33,6 +33,14 @@ const Index = () => {
     { name: "هدايا الأعمال", icon: "🎁", bgColor: "bg-red-50" }
   ];
 
+  // Sample featured products
+  const featuredProducts = [
+    { id: 1, name: "نظارات حماية يوفكس", price: 12500, image: "/placeholder.svg" },
+    { id: 2, name: "قفازات PVC", price: 2250, image: "/placeholder.svg" },
+    { id: 3, name: "خوذة أمان", price: 15000, image: "/placeholder.svg" },
+    { id: 4, name: "أحذية السلامة", price: 35000, image: "/placeholder.svg" }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 rtl">
       {/* Header */}
@@ -92,6 +100,24 @@ const Index = () => {
               </div>
               <span className="text-xs text-gray-700 font-medium">{shortcut.name}</span>
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Featured Products */}
+      <div className="px-4 mb-6">
+        <h3 className="text-lg font-bold mb-4 text-right">منتجات مميزة</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {featuredProducts.map((product) => (
+            <Link key={product.id} to={`/product/${product.id}`}>
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                  <span className="text-3xl">🔧</span>
+                </div>
+                <h4 className="text-sm font-medium mb-2">{product.name}</h4>
+                <p className="text-lg font-bold text-red-600">IQD {product.price.toLocaleString()}</p>
+              </div>
+            </Link>
           ))}
         </div>
       </div>
