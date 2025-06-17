@@ -1,5 +1,5 @@
-
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import CategoryCard from "./CategoryCard";
 
 interface Category {
@@ -18,9 +18,11 @@ const CategoriesSection = ({ categories, isLoading }: CategoriesSectionProps) =>
   return (
     <div className="px-4 mb-20">
       <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 text-sm px-4 py-2">
-          عرض الكل
-        </Button>
+        <Link to="/categories">
+          <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 text-sm px-4 py-2">
+            عرض الكل
+          </Button>
+        </Link>
         <h3 className="text-lg font-bold text-gray-800">تسوق حسب الفئة</h3>
       </div>
       
