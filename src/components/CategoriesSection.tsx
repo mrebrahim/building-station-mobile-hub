@@ -18,23 +18,24 @@ const CategoriesSection = ({ categories, isLoading }: CategoriesSectionProps) =>
   return (
     <div className="px-4 mb-20">
       <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50">
+        <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 text-sm px-4 py-2">
           عرض الكل
         </Button>
         <h3 className="text-lg font-bold text-gray-800">تسوق حسب الفئة</h3>
       </div>
       
       {isLoading ? (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white rounded-xl p-4 text-center shadow-sm animate-pulse border border-gray-100">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg mx-auto mb-3"></div>
-              <div className="h-4 bg-gray-200 rounded"></div>
+            <div key={i} className="bg-white rounded-2xl p-3 text-center shadow-sm animate-pulse border border-gray-100">
+              <div className="w-14 h-14 bg-gray-200 rounded-xl mx-auto mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-2/3 mx-auto"></div>
             </div>
           ))}
         </div>
       ) : categories.length > 0 ? (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           {categories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
