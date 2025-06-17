@@ -87,6 +87,7 @@ class WooCommerceService {
     const url = `${WC_BASE_URL}${endpoint}`;
     
     console.log('Making WooCommerce API request to:', url);
+    console.log('Request options:', options);
     
     try {
       const response = await fetch(url, {
@@ -99,18 +100,28 @@ class WooCommerceService {
       });
 
       console.log('WooCommerce API response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('WooCommerce API error:', response.status, errorText);
-        throw new Error(`WooCommerce API error: ${response.status}`);
+        console.error('WooCommerce API error details:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          url
+        });
+        throw new Error(`WooCommerce API error: ${response.status} - ${response.statusText}`);
       }
 
       const data = await response.json();
       console.log('WooCommerce API response data:', data);
       return data;
     } catch (error) {
-      console.warn('WooCommerce API request failed, using mock data:', error);
+      console.error('WooCommerce API request failed with detailed error:', {
+        error: error.message,
+        url,
+        endpoint
+      });
       throw error;
     }
   }
@@ -200,9 +211,27 @@ class WooCommerceService {
       const queryString = searchParams.toString();
       const endpoint = `/products/categories${queryString ? `?${queryString}` : ''}`;
       
-      return await this.makeRequest(endpoint);
+      console.log('Attempting to fetch categories from endpoint:', endpoint);
+      const data = await this.makeRequest(endpoint);
+      
+      // Transform the API response to match our Category interface
+      const transformedCategories = data.map((apiCategory: any) => ({
+        id: apiCategory.id,
+        name: apiCategory.name,
+        slug: apiCategory.slug,
+        description: apiCategory.description,
+        image: apiCategory.image ? {
+          id: apiCategory.image.id,
+          src: apiCategory.image.src,
+          alt: apiCategory.image.alt || apiCategory.name
+        } : undefined,
+        count: apiCategory.count
+      }));
+      
+      console.log('Successfully fetched and transformed categories:', transformedCategories);
+      return transformedCategories;
     } catch (error) {
-      console.log('Using mock categories due to API error');
+      console.log('Categories API failed, using mock categories due to error:', error.message);
       let filteredCategories = [...mockCategories];
       
       if (params.per_page) {
