@@ -44,6 +44,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
     });
   };
 
+  // Debug logging
+  console.log('Product in ProductCard:', product);
+  console.log('Product images:', product.images);
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error('Image failed to load:', e.currentTarget.src);
+    e.currentTarget.style.display = 'none';
+  };
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.log('Image loaded successfully:', e.currentTarget.src);
+  };
+
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative">
       {/* Heart Icon */}
@@ -52,11 +65,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
       {/* Product Image */}
       <Link to={`/product/${product.id}`}>
         <div className="w-full h-40 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-          {product.images && product.images.length > 0 ? (
+          {product.images && product.images.length > 0 && product.images[0].src ? (
             <img 
               src={product.images[0].src} 
               alt={product.images[0].alt || product.name}
               className="w-full h-full object-contain hover:scale-105 transition-transform duration-200"
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              loading="lazy"
             />
           ) : (
             <span className="text-4xl text-gray-300">📦</span>
