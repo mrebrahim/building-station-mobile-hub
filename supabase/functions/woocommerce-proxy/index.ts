@@ -23,11 +23,12 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const endpoint = url.searchParams.get('endpoint');
-    const params = url.searchParams.get('params');
+    // Parse the request body to get the endpoint and parameters
+    const requestBody = await req.json();
+    const { endpoint, params, method = 'GET', body } = requestBody;
     
     if (!endpoint) {
+      console.error('Missing endpoint in request body');
       return new Response(
         JSON.stringify({ error: 'Missing endpoint parameter' }),
         { 
@@ -39,6 +40,7 @@ serve(async (req) => {
 
     console.log('WooCommerce Proxy - Endpoint:', endpoint);
     console.log('WooCommerce Proxy - Params:', params);
+    console.log('WooCommerce Proxy - Method:', method);
 
     // Build the WooCommerce API URL
     let woocommerceUrl = `${WC_BASE_URL}${endpoint}`;
@@ -50,16 +52,17 @@ serve(async (req) => {
 
     // Make the request to WooCommerce API
     const response = await fetch(woocommerceUrl, {
-      method: req.method,
+      method: method,
       headers: {
         'Authorization': createAuthHeader(),
         'Content-Type': 'application/json',
         'User-Agent': 'Supabase-Edge-Function'
       },
-      body: req.method !== 'GET' ? await req.text() : undefined,
+      body: method !== 'GET' && body ? JSON.stringify(body) : undefined,
     });
 
     console.log('WooCommerce API response status:', response.status);
+    console.log('WooCommerce API response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -73,7 +76,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: `WooCommerce API error: ${response.status} - ${response.statusText}`,
-          details: errorText
+          details: errorText,
+          url: woocommerceUrl
         }),
         { 
           status: response.status,
@@ -94,7 +98,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        message: error.message 
+        message: error.message,
+        stack: error.stack
       }),
       { 
         status: 500,
