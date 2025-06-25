@@ -17,15 +17,7 @@ const Index = () => {
     retryDelay: 1000,
   });
 
-  // Fetch all products first, then featured products as fallback
-  const { data: allProducts = [], isLoading: allProductsLoading } = useQuery({
-    queryKey: ['all-products'],
-    queryFn: () => wooCommerceService.getProducts({ per_page: 8 }),
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  // Try to get featured products, but fallback to regular products
+  // Fetch featured products for the featured section
   const { data: featuredProducts = [], isLoading: featuredLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: () => wooCommerceService.getProducts({ per_page: 4, featured: true }),
@@ -33,9 +25,13 @@ const Index = () => {
     retryDelay: 1000,
   });
 
-  // Use featured products if available, otherwise use first 4 regular products
-  const productsToShow = featuredProducts.length > 0 ? featuredProducts : allProducts.slice(0, 4);
-  const isProductsLoading = featuredLoading || allProductsLoading;
+  // Fetch catalog products specifically for the "منتجات الكتالوج" section
+  const { data: catalogProducts = [], isLoading: catalogLoading } = useQuery({
+    queryKey: ['catalog-products'],
+    queryFn: () => wooCommerceService.getProducts({ per_page: 8, orderby: 'date', order: 'desc' }),
+    retry: 3,
+    retryDelay: 1000,
+  });
 
   // Transform API categories to match display format, filtering out empty categories
   const displayCategories = apiCategories
@@ -51,8 +47,7 @@ const Index = () => {
   console.log('API Categories:', apiCategories);
   console.log('Display Categories:', displayCategories);
   console.log('Featured Products:', featuredProducts);
-  console.log('All Products:', allProducts);
-  console.log('Products to Show:', productsToShow);
+  console.log('Catalog Products:', catalogProducts);
   console.log('Categories Error:', categoriesError);
 
   return (
@@ -60,11 +55,23 @@ const Index = () => {
       <Header />
       <Banner />
       <ShortcutsGrid />
+      
+      {/* Show featured products if available */}
+      {featuredProducts.length > 0 && (
+        <ProductsSection 
+          products={featuredProducts} 
+          isLoading={featuredLoading} 
+          isFeatured={true} 
+        />
+      )}
+      
+      {/* Always show catalog products section */}
       <ProductsSection 
-        products={productsToShow} 
-        isLoading={isProductsLoading} 
-        isFeatured={featuredProducts.length > 0} 
+        products={catalogProducts} 
+        isLoading={catalogLoading} 
+        isFeatured={false} 
       />
+      
       <CategoriesSection 
         categories={displayCategories} 
         isLoading={categoriesLoading} 
