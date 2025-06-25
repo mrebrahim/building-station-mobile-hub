@@ -32,7 +32,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         brand: product.categories?.[0]?.name || 'غير محدد',
         price: parseFloat(product.price) || 0,
         quantity: 1,
-        image: product.images?.[0]?.src || ''
+        image: product.images?.[0]?.src || '' // Store the actual image URL from API
       });
     }
     

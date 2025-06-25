@@ -64,8 +64,23 @@ const Cart = () => {
             {cartItems.map((item) => (
               <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex gap-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <div className="text-3xl">🧤</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    {item.image && item.image !== '' ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error("Cart item image failed to load:", e.currentTarget.src);
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl text-gray-400">📦</span>';
+                        }}
+                        onLoad={() => console.log("Successfully loaded cart item image:", item.image)}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-2xl text-gray-400">📦</span>
+                    )}
                   </div>
                   
                   <div className="flex-1">

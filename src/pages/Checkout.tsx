@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const Checkout = () => {
@@ -22,19 +22,25 @@ const Checkout = () => {
     codPayment: false
   });
 
-  const [orderSummary] = useState({
-    items: [
-      {
-        id: 1,
-        name: "PVC Large Gloves",
-        price: 1500,
-        quantity: 1
-      }
-    ],
-    subtotal: 1500,
+  const [orderSummary, setOrderSummary] = useState({
+    items: [] as any[],
+    subtotal: 0,
     shipping: 0,
-    total: 1500
+    total: 0
   });
+
+  useEffect(() => {
+    // Load cart items from localStorage for checkout
+    const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const subtotal = savedCart.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+    
+    setOrderSummary({
+      items: savedCart,
+      subtotal: subtotal,
+      shipping: 0,
+      total: subtotal
+    });
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -270,8 +276,23 @@ const Checkout = () => {
           {orderSummary.items.map((item) => (
             <div key={item.id} className="flex items-center gap-4 mb-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-2xl">🧤</div>
+                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  {item.image && item.image !== '' ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error("Checkout item image failed to load:", e.currentTarget.src);
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl text-gray-400">📦</span>';
+                      }}
+                      onLoad={() => console.log("Successfully loaded checkout item image:", item.image)}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-2xl text-gray-400">📦</span>
+                  )}
                 </div>
                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gray-500 text-white text-xs rounded-full flex items-center justify-center">
                   {item.quantity}
