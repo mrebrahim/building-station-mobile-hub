@@ -20,18 +20,32 @@ export class CategoriesService {
       const data = await apiClient.makeRequest(endpoint);
       
       // Transform the API response to match our Category interface
-      const transformedCategories = data.map((apiCategory: any) => ({
-        id: apiCategory.id,
-        name: apiCategory.name,
-        slug: apiCategory.slug,
-        description: apiCategory.description,
-        image: apiCategory.image ? {
-          id: apiCategory.image.id,
-          src: apiCategory.image.src,
-          alt: apiCategory.image.alt || apiCategory.name
-        } : undefined,
-        count: apiCategory.count
-      }));
+      const transformedCategories = data.map((apiCategory: any) => {
+        console.log('Processing category:', apiCategory.name, 'Image data:', apiCategory.image);
+        
+        // Handle different image data structures from WooCommerce API
+        let imageData = undefined;
+        if (apiCategory.image && 
+            apiCategory.image.src && 
+            apiCategory.image.src !== '' && 
+            apiCategory.image._type !== 'undefined' &&
+            apiCategory.image.value !== 'undefined') {
+          imageData = {
+            id: apiCategory.image.id || 0,
+            src: apiCategory.image.src,
+            alt: apiCategory.image.alt || apiCategory.name
+          };
+        }
+        
+        return {
+          id: apiCategory.id,
+          name: apiCategory.name,
+          slug: apiCategory.slug,
+          description: apiCategory.description,
+          image: imageData,
+          count: apiCategory.count
+        };
+      });
       
       console.log('Successfully fetched and transformed categories:', transformedCategories);
       return transformedCategories;
