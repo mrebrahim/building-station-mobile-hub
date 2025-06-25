@@ -1,5 +1,5 @@
 
-import { Product, Category } from './woocommerce';
+import { Product, Category } from './woocommerce/types';
 
 export const mockCategories: Category[] = [
   {

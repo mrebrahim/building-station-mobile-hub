@@ -1,4 +1,4 @@
 
 // Re-export everything from the refactored modules
-export * from './woocommerce';
-export { wooCommerceService } from './woocommerce';
+export * from './woocommerce/index';
+export { wooCommerceService } from './woocommerce/index';
