@@ -1,9 +1,8 @@
-
 import { mockCategories, mockProducts } from './mockData';
 
 const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
-const CONSUMER_KEY = 'ck_549af4e85bfb7e60c35d627e71620088a2a98850';
-const CONSUMER_SECRET = 'cs_9988845035f54ac5e79c2155c099a977c8fc56d1';
+const CONSUMER_KEY = 'ck_3cd9b6a05584400518798be7dd9482136de941c2';
+const CONSUMER_SECRET = 'cs_b6819f1cafb215b6565b420d3912e7e4f18ab3b4';
 
 // Create Basic Auth header
 const createAuthHeader = () => {
