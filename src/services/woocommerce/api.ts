@@ -1,44 +1,35 @@
 
-import { WC_BASE_URL, createAuthHeader } from './config';
+import { supabase } from '@/integrations/supabase/client';
 
 export class WooCommerceAPI {
   async makeRequest(endpoint: string, options: RequestInit = {}) {
-    const url = `${WC_BASE_URL}${endpoint}`;
-    
-    console.log('Making WooCommerce API request to:', url);
+    console.log('Making WooCommerce API request via Edge Function to endpoint:', endpoint);
     console.log('Request options:', options);
     
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Authorization': createAuthHeader(),
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+      // Extract search params from endpoint if they exist
+      const [path, searchParams] = endpoint.split('?');
+      
+      // Use Supabase Edge Function as proxy
+      const { data, error } = await supabase.functions.invoke('woocommerce-proxy', {
+        body: {
+          endpoint: path,
+          params: searchParams || '',
+          method: options.method || 'GET',
+          body: options.body
+        }
       });
 
-      console.log('WooCommerce API response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('WooCommerce API error details:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText,
-          url
-        });
-        throw new Error(`WooCommerce API error: ${response.status} - ${response.statusText}`);
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw new Error(`Edge Function error: ${error.message}`);
       }
 
-      const data = await response.json();
-      console.log('WooCommerce API response data:', data);
+      console.log('WooCommerce API response via Edge Function:', data);
       return data;
     } catch (error) {
-      console.error('WooCommerce API request failed with detailed error:', {
+      console.error('WooCommerce API request failed via Edge Function:', {
         error: error.message,
-        url,
         endpoint
       });
       throw error;
