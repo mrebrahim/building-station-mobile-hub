@@ -18,6 +18,14 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
           <img 
             src={category.image.src} 
             alt={category.image.alt || category.name}
+            loading="lazy"
+            onError={(e) => {
+              console.error("Category image failed to load:", e.currentTarget.src);
+              // Show a category box emoji as fallback instead of another image
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.innerHTML = '<span class="text-xl">📦</span>';
+            }}
+            onLoad={() => console.log("Successfully loaded category image:", category.image?.src)}
             className="w-full h-full object-contain"
           />
         ) : (
