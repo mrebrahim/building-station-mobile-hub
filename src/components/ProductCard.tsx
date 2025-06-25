@@ -52,17 +52,23 @@ const ProductCard = ({ product }: ProductCardProps) => {
       {/* Product Image */}
       <Link to={`/product/${product.id}`}>
         <div className="w-full h-40 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-          <img
-            src={product.images?.[0]?.src || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop"}
-            alt={product.name}
-            loading="lazy"
-            onError={(e) => {
-              console.error("Image failed to load:", e.currentTarget.src);
-              e.currentTarget.src = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop";
-            }}
-            onLoad={() => console.log("Loaded image:", product.images?.[0]?.src)}
-            className="w-full h-full object-contain hover:scale-105 transition-transform duration-200"
-          />
+          {product.images && product.images.length > 0 && product.images[0].src ? (
+            <img
+              src={product.images[0].src}
+              alt={product.images[0].alt || product.name}
+              loading="lazy"
+              onError={(e) => {
+                console.error("Product image failed to load:", e.currentTarget.src);
+                // Show a product box emoji as fallback instead of another image
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement!.innerHTML = '<span class="text-4xl text-gray-400">📦</span>';
+              }}
+              onLoad={() => console.log("Successfully loaded product image:", product.images?.[0]?.src)}
+              className="w-full h-full object-contain hover:scale-105 transition-transform duration-200"
+            />
+          ) : (
+            <span className="text-4xl text-gray-400">📦</span>
+          )}
         </div>
       </Link>
       
