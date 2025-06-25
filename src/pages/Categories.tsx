@@ -8,14 +8,25 @@ import { Button } from "@/components/ui/button";
 
 const Categories = () => {
   // Fetch all categories from WooCommerce API
-  const { data: categories = [], isLoading, error } = useQuery({
+  const { data: apiCategories = [], isLoading, error } = useQuery({
     queryKey: ['all-categories'],
     queryFn: () => wooCommerceService.getCategories({ per_page: 100 }),
     retry: 3,
     retryDelay: 1000,
   });
 
-  console.log('All Categories:', categories);
+  // Transform API categories to display format, filtering out empty categories
+  const displayCategories = apiCategories
+    .filter(cat => cat.count > 0) // Only show categories with products
+    .map(apiCat => ({
+      id: apiCat.id,
+      name: apiCat.name,
+      count: apiCat.count,
+      image: apiCat.image || undefined
+    }));
+
+  console.log('All API Categories:', apiCategories);
+  console.log('Display Categories:', displayCategories);
   console.log('Categories Error:', error);
 
   return (
@@ -45,9 +56,9 @@ const Categories = () => {
               </div>
             ))}
           </div>
-        ) : categories.length > 0 ? (
+        ) : displayCategories.length > 0 ? (
           <div className="grid grid-cols-3 gap-3">
-            {categories.map((category) => (
+            {displayCategories.map((category) => (
               <CategoryCard key={category.id} category={category} />
             ))}
           </div>

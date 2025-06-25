@@ -10,7 +10,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 
 const Index = () => {
   // Fetch categories from WooCommerce
-  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
+  const { data: apiCategories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => wooCommerceService.getCategories({ per_page: 18 }),
     retry: 3,
@@ -37,7 +37,19 @@ const Index = () => {
   const productsToShow = featuredProducts.length > 0 ? featuredProducts : allProducts.slice(0, 4);
   const isProductsLoading = featuredLoading || allProductsLoading;
 
-  console.log('Categories:', categories);
+  // Transform API categories to match display format, filtering out empty categories
+  const displayCategories = apiCategories
+    .filter(cat => cat.count > 0) // Only show categories with products
+    .slice(0, 6) // Limit to 6 categories for display
+    .map(apiCat => ({
+      id: apiCat.id,
+      name: apiCat.name,
+      count: apiCat.count,
+      image: apiCat.image || undefined
+    }));
+
+  console.log('API Categories:', apiCategories);
+  console.log('Display Categories:', displayCategories);
   console.log('Featured Products:', featuredProducts);
   console.log('All Products:', allProducts);
   console.log('Products to Show:', productsToShow);
@@ -54,7 +66,7 @@ const Index = () => {
         isFeatured={featuredProducts.length > 0} 
       />
       <CategoriesSection 
-        categories={categories} 
+        categories={displayCategories} 
         isLoading={categoriesLoading} 
       />
       <BottomNavigation />
