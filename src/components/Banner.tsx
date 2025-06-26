@@ -1,32 +1,85 @@
 
 import { Link } from "react-router-dom";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { useEffect, useState } from "react";
 
 const Banner = () => {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+
+  const banners = [
+    {
+      id: 1,
+      image: "/lovable-uploads/86d58d52-96fe-4e34-946e-66010b49a622.png",
+      alt: "مجموعتنا - Building Station",
+      link: "/categories"
+    },
+    {
+      id: 2,
+      image: "/lovable-uploads/d7aa46b0-6cd7-4fbb-9007-dbad270642a1.png",
+      alt: "أفضل الماركات العالمية",
+      link: "/brands"
+    }
+  ];
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
+
+  const scrollToSlide = (index: number) => {
+    api?.scrollTo(index);
+  };
+
   return (
     <div className="px-4 py-4">
-      <div className="grid grid-cols-2 gap-3">
-        {/* First Banner - Navigate to Categories */}
-        <Link to="/categories" className="block">
-          <div className="relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200">
-            <img 
-              src="/lovable-uploads/86d58d52-96fe-4e34-946e-66010b49a622.png"
-              alt="مجموعتنا - Building Station"
-              className="w-full h-32 sm:h-40 object-cover"
+      <Carousel setApi={setApi} className="w-full">
+        <CarouselContent>
+          {banners.map((banner) => (
+            <CarouselItem key={banner.id}>
+              <Link to={banner.link} className="block">
+                <div className="relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200">
+                  <img 
+                    src={banner.image}
+                    alt={banner.alt}
+                    className="w-full h-40 sm:h-48 object-cover"
+                  />
+                </div>
+              </Link>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+      
+      {/* Pagination dots */}
+      {count > 1 && (
+        <div className="flex justify-center space-x-2 mt-4">
+          {Array.from({ length: count }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToSlide(index)}
+              className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                current === index + 1 ? "bg-red-500" : "bg-gray-300 hover:bg-gray-400"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
             />
-          </div>
-        </Link>
-
-        {/* Second Banner - Navigate to Brands */}
-        <Link to="/brands" className="block">
-          <div className="relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200">
-            <img 
-              src="/lovable-uploads/d7aa46b0-6cd7-4fbb-9007-dbad270642a1.png"
-              alt="أفضل الماركات العالمية"
-              className="w-full h-32 sm:h-40 object-cover"
-            />
-          </div>
-        </Link>
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
