@@ -47,6 +47,9 @@ const Banner = () => {
       console.log('Carousel slide changed to:', selectedSnap);
       setCurrent(selectedSnap);
     });
+
+    // Force reInit to ensure proper setup in RTL
+    api.reInit();
   }, [api]);
 
   // Auto-slide effect
@@ -63,7 +66,7 @@ const Banner = () => {
       
       if (nextIndex >= api.scrollSnapList().length) {
         console.log('Auto-slide: going back to first slide');
-        api.scrollTo(0); // Go back to first slide
+        api.scrollTo(0);
       } else {
         console.log('Auto-slide: going to next slide:', nextIndex);
         api.scrollTo(nextIndex);
@@ -90,14 +93,15 @@ const Banner = () => {
           align: "start",
           loop: true,
           skipSnaps: false,
-          containScroll: "trimSnaps"
+          containScroll: "trimSnaps",
+          direction: "rtl"
         }}
       >
-        <CarouselContent className="flex">
+        <CarouselContent className="flex -ml-0">
           {banners.map((banner, index) => {
             console.log('Rendering banner:', index, banner);
             return (
-              <CarouselItem key={banner.id} className="flex-shrink-0 w-full">
+              <CarouselItem key={banner.id} className="basis-full min-w-0 flex-shrink-0">
                 <Link to={banner.link} className="block">
                   <div className="relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200">
                     <img 
@@ -106,7 +110,12 @@ const Banner = () => {
                       className="w-full h-40 sm:h-48 object-cover"
                       loading="lazy"
                       onLoad={() => console.log(`Banner image ${index} loaded successfully`)}
-                      onError={() => console.error(`Banner image ${index} failed to load`)}
+                      onError={(e) => {
+                        console.error(`Banner image ${index} failed to load:`, e);
+                        // Fallback handling
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
                     />
                   </div>
                 </Link>
@@ -118,7 +127,7 @@ const Banner = () => {
       
       {/* Pagination dots */}
       {count > 1 && (
-        <div className="flex justify-center space-x-2 mt-4">
+        <div className="flex justify-center space-x-2 mt-4" dir="ltr">
           {Array.from({ length: count }).map((_, index) => (
             <button
               key={index}
