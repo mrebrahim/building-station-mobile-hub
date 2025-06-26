@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { wooCommerceService } from "@/services/woocommerce";
 import Header from "@/components/Header";
+import FeaturedCategoriesSection from "@/components/FeaturedCategoriesSection";
 import Banner from "@/components/Banner";
 import ShortcutsGrid from "@/components/ShortcutsGrid";
 import ProductsSection from "@/components/ProductsSection";
@@ -53,6 +54,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 rtl font-sans">
       <Header />
+      <FeaturedCategoriesSection />
       <Banner />
       <ShortcutsGrid />
       
