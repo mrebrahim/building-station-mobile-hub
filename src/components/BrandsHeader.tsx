@@ -18,12 +18,24 @@ const BrandsHeader = () => {
     }
   };
 
+  const handleHelpClick = () => {
+    console.log('Help button clicked, current isHelpOpen:', isHelpOpen);
+    setIsHelpOpen(true);
+    console.log('Help button clicked, setting isHelpOpen to true');
+  };
+
+  const handleHelpClose = () => {
+    console.log('Help close button clicked');
+    setIsHelpOpen(false);
+  };
+
   const helpOptions = [
     {
       id: 1,
       title: "الأسئلة الشائعة",
       icon: MessageCircle,
       action: () => {
+        console.log('FAQ option clicked');
         setIsHelpOpen(false);
         navigate('/faq');
       }
@@ -33,6 +45,7 @@ const BrandsHeader = () => {
       title: "بريد الكتروني",
       icon: Mail,
       action: () => {
+        console.log('Email option clicked');
         window.location.href = 'mailto:support@buildingstation.com';
       }
     },
@@ -41,6 +54,7 @@ const BrandsHeader = () => {
       title: "اتصال",
       icon: Phone,
       action: () => {
+        console.log('Phone option clicked');
         window.location.href = 'tel:+966123456789';
       }
     },
@@ -49,10 +63,13 @@ const BrandsHeader = () => {
       title: "واتساب",
       icon: MessageCircle,
       action: () => {
+        console.log('WhatsApp option clicked');
         window.open('https://wa.me/966123456789', '_blank');
       }
     }
   ];
+
+  console.log('BrandsHeader render, isHelpOpen:', isHelpOpen);
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -69,7 +86,10 @@ const BrandsHeader = () => {
         
         <Sheet open={isHelpOpen} onOpenChange={setIsHelpOpen}>
           <SheetTrigger asChild>
-            <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors">
+            <button 
+              onClick={handleHelpClick}
+              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors"
+            >
               <Phone className="w-4 h-4" />
               <span className="text-sm font-medium">مساعدة</span>
             </button>
@@ -80,7 +100,7 @@ const BrandsHeader = () => {
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b">
                 <button 
-                  onClick={() => setIsHelpOpen(false)}
+                  onClick={handleHelpClose}
                   className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-600" />
