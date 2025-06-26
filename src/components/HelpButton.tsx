@@ -109,7 +109,14 @@ const HelpButton = () => {
               >
                 طلب المشتريات
               </button>
-              <button className="bg-gray-100 text-gray-800 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+              <button 
+                onClick={() => {
+                  console.log('Become supplier button clicked');
+                  setIsHelpOpen(false);
+                  navigate('/become-supplier');
+                }}
+                className="bg-gray-100 text-gray-800 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
                 كن موردًا
               </button>
             </div>
