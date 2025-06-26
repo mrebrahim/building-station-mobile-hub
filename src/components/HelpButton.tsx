@@ -99,7 +99,14 @@ const HelpButton = () => {
             
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-4">
-              <button className="bg-gray-100 text-gray-800 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+              <button 
+                onClick={() => {
+                  console.log('Purchase request button clicked');
+                  setIsHelpOpen(false);
+                  navigate('/purchase-request');
+                }}
+                className="bg-gray-100 text-gray-800 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
                 طلب المشتريات
               </button>
               <button className="bg-gray-100 text-gray-800 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors">

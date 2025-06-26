@@ -13,6 +13,7 @@ import Product from "./pages/Product";
 import Categories from "./pages/Categories";
 import CategoryProducts from "./pages/CategoryProducts";
 import Brands from "./pages/Brands";
+import PurchaseRequest from "./pages/PurchaseRequest";
 import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/purchase-request" element={<PurchaseRequest />} />
           <Route path="/no-internet" element={<NoInternet />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
