@@ -1,7 +1,7 @@
-
-import { ArrowLeft, Phone, Globe, HelpCircle, Users, LogOut } from "lucide-react";
+import { ArrowLeft, Globe, HelpCircle, Users, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import HelpButton from "@/components/HelpButton";
 
 const Profile = () => {
   return (
@@ -9,10 +9,7 @@ const Profile = () => {
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded-full">
-            <Phone className="w-4 h-4" />
-            <span className="text-sm font-medium">مساعدة</span>
-          </div>
+          <HelpButton />
           
           <h1 className="text-lg font-medium">ملفي الشخصي</h1>
           
