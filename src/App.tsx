@@ -12,6 +12,7 @@ import FAQ from "./pages/FAQ";
 import Product from "./pages/Product";
 import Categories from "./pages/Categories";
 import CategoryProducts from "./pages/CategoryProducts";
+import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/no-internet" element={<NoInternet />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
