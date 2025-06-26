@@ -34,10 +34,10 @@ const Banner = () => {
     }
 
     setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
+    setCurrent(api.selectedScrollSnap());
 
     api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
+      setCurrent(api.selectedScrollSnap());
     });
   }, [api]);
 
@@ -48,7 +48,9 @@ const Banner = () => {
     }
 
     const interval = setInterval(() => {
-      const nextIndex = api.selectedScrollSnap() + 1;
+      const currentIndex = api.selectedScrollSnap();
+      const nextIndex = currentIndex + 1;
+      
       if (nextIndex >= api.scrollSnapList().length) {
         api.scrollTo(0); // Go back to first slide
       } else {
@@ -65,7 +67,14 @@ const Banner = () => {
 
   return (
     <div className="px-4 py-4">
-      <Carousel setApi={setApi} className="w-full">
+      <Carousel 
+        setApi={setApi} 
+        className="w-full"
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+      >
         <CarouselContent>
           {banners.map((banner) => (
             <CarouselItem key={banner.id}>
@@ -75,6 +84,7 @@ const Banner = () => {
                     src={banner.image}
                     alt={banner.alt}
                     className="w-full h-40 sm:h-48 object-cover"
+                    loading="lazy"
                   />
                 </div>
               </Link>
@@ -91,7 +101,7 @@ const Banner = () => {
               key={index}
               onClick={() => scrollToSlide(index)}
               className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                current === index + 1 ? "bg-red-500" : "bg-gray-300 hover:bg-gray-400"
+                current === index ? "bg-red-500" : "bg-gray-300 hover:bg-gray-400"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
