@@ -71,7 +71,7 @@ const HelpButton = () => {
             </button>
             
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-red-500">TOOLMART</h2>
+              <h2 className="text-2xl font-bold text-red-500">Building Station</h2>
             </div>
             
             <div className="w-10"></div>

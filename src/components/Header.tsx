@@ -1,5 +1,5 @@
 
-import { Search, Bell, Menu } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import HelpButton from "./HelpButton";
 
 const Header = () => {
@@ -7,12 +7,11 @@ const Header = () => {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <Menu className="w-6 h-6 text-gray-700" />
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">T</span>
+              <span className="text-white font-bold text-sm">B</span>
             </div>
-            <span className="text-xl font-bold text-red-500">TOOLMART</span>
+            <span className="text-xl font-bold text-red-500">Building Station</span>
           </div>
         </div>
         
