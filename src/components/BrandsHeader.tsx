@@ -23,6 +23,12 @@ const BrandsHeader = () => {
     setIsHelpOpen(false);
   };
 
+  const handleHelpClick = () => {
+    console.log('Help button clicked, current isHelpOpen:', isHelpOpen);
+    setIsHelpOpen(true);
+    console.log('Help button clicked, setting isHelpOpen to true');
+  };
+
   const helpOptions = [
     {
       id: 1,
@@ -80,7 +86,10 @@ const BrandsHeader = () => {
         
         <Sheet open={isHelpOpen} onOpenChange={setIsHelpOpen}>
           <SheetTrigger asChild>
-            <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors">
+            <button 
+              onClick={handleHelpClick}
+              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-colors"
+            >
               <Phone className="w-4 h-4" />
               <span className="text-sm font-medium">مساعدة</span>
             </button>
