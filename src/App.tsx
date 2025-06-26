@@ -12,6 +12,7 @@ import FAQ from "./pages/FAQ";
 import Product from "./pages/Product";
 import Categories from "./pages/Categories";
 import CategoryProducts from "./pages/CategoryProducts";
+import Brands from "./pages/Brands";
 import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/product/:id" element={<Product />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/category/:categoryId" element={<CategoryProducts />} />
+          <Route path="/brands" element={<Brands />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<Profile />} />
