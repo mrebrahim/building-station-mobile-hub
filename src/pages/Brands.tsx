@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { wooCommerceService } from "@/services/woocommerce";
-import Header from "@/components/Header";
+import BrandsHeader from "@/components/BrandsHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Link } from "react-router-dom";
 
@@ -31,7 +31,7 @@ const Brands = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 rtl font-sans">
-      <Header />
+      <BrandsHeader />
       
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-right">الماركات</h1>
