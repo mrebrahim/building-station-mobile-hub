@@ -28,16 +28,24 @@ const Banner = () => {
     }
   ];
 
+  console.log('Banner component rendered with banners:', banners);
+
   useEffect(() => {
     if (!api) {
       return;
     }
 
-    setCount(api.scrollSnapList().length);
+    const snapList = api.scrollSnapList();
+    console.log('Carousel API initialized. Snap list:', snapList);
+    console.log('Scroll snap list length:', snapList.length);
+
+    setCount(snapList.length);
     setCurrent(api.selectedScrollSnap());
 
     api.on("select", () => {
-      setCurrent(api.selectedScrollSnap());
+      const selectedSnap = api.selectedScrollSnap();
+      console.log('Carousel slide changed to:', selectedSnap);
+      setCurrent(selectedSnap);
     });
   }, [api]);
 
@@ -47,21 +55,29 @@ const Banner = () => {
       return;
     }
 
+    console.log('Setting up auto-slide interval');
     const interval = setInterval(() => {
       const currentIndex = api.selectedScrollSnap();
       const nextIndex = currentIndex + 1;
+      console.log('Auto-slide: current index:', currentIndex, 'next index:', nextIndex);
       
       if (nextIndex >= api.scrollSnapList().length) {
+        console.log('Auto-slide: going back to first slide');
         api.scrollTo(0); // Go back to first slide
       } else {
+        console.log('Auto-slide: going to next slide:', nextIndex);
         api.scrollTo(nextIndex);
       }
     }, 5000); // 5 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('Cleaning up auto-slide interval');
+      clearInterval(interval);
+    };
   }, [api]);
 
   const scrollToSlide = (index: number) => {
+    console.log('Manual slide navigation to index:', index);
     api?.scrollTo(index);
   };
 
@@ -73,23 +89,30 @@ const Banner = () => {
         opts={{
           align: "start",
           loop: true,
+          skipSnaps: false,
+          containScroll: "trimSnaps"
         }}
       >
-        <CarouselContent>
-          {banners.map((banner) => (
-            <CarouselItem key={banner.id}>
-              <Link to={banner.link} className="block">
-                <div className="relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200">
-                  <img 
-                    src={banner.image}
-                    alt={banner.alt}
-                    className="w-full h-40 sm:h-48 object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </Link>
-            </CarouselItem>
-          ))}
+        <CarouselContent className="flex">
+          {banners.map((banner, index) => {
+            console.log('Rendering banner:', index, banner);
+            return (
+              <CarouselItem key={banner.id} className="flex-shrink-0 w-full">
+                <Link to={banner.link} className="block">
+                  <div className="relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200">
+                    <img 
+                      src={banner.image}
+                      alt={banner.alt}
+                      className="w-full h-40 sm:h-48 object-cover"
+                      loading="lazy"
+                      onLoad={() => console.log(`Banner image ${index} loaded successfully`)}
+                      onError={() => console.error(`Banner image ${index} failed to load`)}
+                    />
+                  </div>
+                </Link>
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
       </Carousel>
       
