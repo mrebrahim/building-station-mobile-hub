@@ -54,8 +54,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 rtl font-sans">
       <Header />
-      <FeaturedCategoriesSection />
       <Banner />
+      <FeaturedCategoriesSection />
       <ShortcutsGrid />
       
       {/* Show featured products if available */}

@@ -41,6 +41,24 @@ const Banner = () => {
     });
   }, [api]);
 
+  // Auto-slide effect
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const nextIndex = api.selectedScrollSnap() + 1;
+      if (nextIndex >= api.scrollSnapList().length) {
+        api.scrollTo(0); // Go back to first slide
+      } else {
+        api.scrollTo(nextIndex);
+      }
+    }, 5000); // 5 seconds
+
+    return () => clearInterval(interval);
+  }, [api]);
+
   const scrollToSlide = (index: number) => {
     api?.scrollTo(index);
   };
