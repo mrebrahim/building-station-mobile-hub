@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import FeaturedCategoriesSection from "@/components/FeaturedCategoriesSection";
 import Banner from "@/components/Banner";
 import ShortcutsGrid from "@/components/ShortcutsGrid";
+import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import CategoriesSection from "@/components/CategoriesSection";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -57,6 +58,7 @@ const Index = () => {
       <Banner />
       <FeaturedCategoriesSection />
       <ShortcutsGrid />
+      <BrandsSection />
       
       {/* Show featured products if available */}
       {featuredProducts.length > 0 && (
