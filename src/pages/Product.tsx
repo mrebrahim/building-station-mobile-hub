@@ -1,7 +1,6 @@
-
 import { ArrowLeft, Heart, Share, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +31,48 @@ const Product = () => {
     }),
     enabled: !!product?.categories?.[0]?.id,
   });
+
+  // Check if product is in favorites when product loads
+  useEffect(() => {
+    if (product) {
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      const isProductFavorite = favorites.some((fav: any) => fav.id === product.id);
+      setIsFavorite(isProductFavorite);
+    }
+  }, [product]);
+
+  const toggleFavorite = () => {
+    if (!product) return;
+    
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    
+    if (isFavorite) {
+      // Remove from favorites
+      const updatedFavorites = favorites.filter((fav: any) => fav.id !== product.id);
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      setIsFavorite(false);
+      toast({
+        title: "تم الحذف",
+        description: `تم حذف ${product.name} من المفضلة`,
+      });
+    } else {
+      // Add to favorites
+      const favoriteProduct = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0]?.src || '',
+        brand: product.categories?.[0]?.name || 'غير محدد'
+      };
+      favorites.push(favoriteProduct);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      setIsFavorite(true);
+      toast({
+        title: "تم الإضافة",
+        description: `تم إضافة ${product.name} إلى المفضلة`,
+      });
+    }
+  };
 
   if (productLoading) {
     return (
@@ -117,7 +158,7 @@ const Product = () => {
             <Share className="w-6 h-6 text-gray-600" />
             <Heart 
               className={`w-6 h-6 cursor-pointer ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-600'}`}
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={toggleFavorite}
             />
           </div>
           
@@ -125,9 +166,9 @@ const Product = () => {
             <Link to="/cart" className="bg-black text-white px-3 py-1 rounded-full text-sm">
               عرض السلة
             </Link>
-            <div className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">
-              عرض قائمة طلب الأسعار
-            </div>
+            <Link to="/favorites" className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">
+              عرض المفضلة
+            </Link>
           </div>
           
           <Link to="/">

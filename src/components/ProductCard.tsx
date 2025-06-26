@@ -2,6 +2,7 @@
 import { Heart, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 interface Product {
   id: number;
@@ -18,6 +19,14 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Check if product is in favorites when component mounts
+  useEffect(() => {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const isProductFavorite = favorites.some((fav: any) => fav.id === product.id);
+    setIsFavorite(isProductFavorite);
+  }, [product.id]);
 
   const handleAddToCart = (product: Product) => {
     const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -32,7 +41,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         brand: product.categories?.[0]?.name || 'غير محدد',
         price: parseFloat(product.price) || 0,
         quantity: 1,
-        image: product.images?.[0]?.src || '' // Store the actual image URL from API
+        image: product.images?.[0]?.src || ''
       });
     }
     
@@ -44,10 +53,45 @@ const ProductCard = ({ product }: ProductCardProps) => {
     });
   };
 
+  const toggleFavorite = () => {
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    
+    if (isFavorite) {
+      // Remove from favorites
+      const updatedFavorites = favorites.filter((fav: any) => fav.id !== product.id);
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      setIsFavorite(false);
+      toast({
+        title: "تم الحذف",
+        description: `تم حذف ${product.name} من المفضلة`,
+      });
+    } else {
+      // Add to favorites
+      const favoriteProduct = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0]?.src || '',
+        brand: product.categories?.[0]?.name || 'غير محدد'
+      };
+      favorites.push(favoriteProduct);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      setIsFavorite(true);
+      toast({
+        title: "تم الإضافة",
+        description: `تم إضافة ${product.name} إلى المفضلة`,
+      });
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative">
       {/* Heart Icon */}
-      <Heart className="absolute top-3 left-3 w-5 h-5 text-gray-300 hover:text-red-500 cursor-pointer z-10" />
+      <button onClick={toggleFavorite}>
+        <Heart className={`absolute top-3 left-3 w-5 h-5 cursor-pointer z-10 ${
+          isFavorite ? 'text-red-500 fill-current' : 'text-gray-300 hover:text-red-500'
+        }`} />
+      </button>
       
       {/* Product Image */}
       <Link to={`/product/${product.id}`}>
