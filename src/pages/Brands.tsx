@@ -3,9 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { wooCommerceService } from "@/services/woocommerce";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface Brand {
   id: number;
@@ -21,8 +19,6 @@ interface Brand {
 }
 
 const Brands = () => {
-  const navigate = useNavigate();
-  
   const { data: brands = [], isLoading, error } = useQuery({
     queryKey: ['brands'],
     queryFn: () => wooCommerceService.getBrands(),
@@ -33,41 +29,12 @@ const Brands = () => {
   console.log('Brands data:', brands);
   console.log('Brands error:', error);
 
-  const handleBackClick = () => {
-    navigate(-1);
-  };
-
-  const handleForwardClick = () => {
-    navigate(1);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 rtl font-sans">
       <Header />
       
       <div className="px-4 py-6">
-        {/* Navigation Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleForwardClick}
-            className="h-10 w-10 rounded-full"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-          
-          <h1 className="text-2xl font-bold text-gray-800 text-center">الماركات</h1>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleBackClick}
-            className="h-10 w-10 rounded-full"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-right">الماركات</h1>
         
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
