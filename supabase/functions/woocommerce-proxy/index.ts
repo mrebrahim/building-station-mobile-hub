@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
-const CONSUMER_KEY = 'ck_cd0cb2feaca27a3c317b1c1d33689f29e0d15029';
-const CONSUMER_SECRET = 'cs_378a4cbddf6425f9e88d1d32bdb47fac18cf27d3';
+const CONSUMER_KEY = 'ck_668bb44e4c0f02715c80f73464b92f44134099c7';
+const CONSUMER_SECRET = 'cs_533cd7f7590a9b313ef7f6421517b81f453cca8d';
 
 // Create Basic Auth header
 const createAuthHeader = () => {
