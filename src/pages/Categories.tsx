@@ -17,13 +17,13 @@ const Categories = () => {
 
   // Transform API categories to display format, filtering for main categories only
   const displayCategories = apiCategories
-    .filter(cat => cat.count > 0 && (cat.parent === 0 || !cat.parent)) // Only show parent categories with products
+    .filter(cat => cat.count > 0 && (!cat.parent_id || cat.parent_id === 0)) // Only show parent categories
     .map(apiCat => ({
       id: apiCat.id,
       name: apiCat.name,
       count: apiCat.count,
       image: apiCat.image || undefined,
-      parent: apiCat.parent
+      parent_id: apiCat.parent_id
     }));
 
   console.log('All API Categories:', apiCategories);

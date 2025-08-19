@@ -21,7 +21,7 @@ const SubCategories = () => {
   
   // Get sub-categories
   const subCategories = apiCategories
-    .filter(cat => cat.parent === parseInt(categoryId || '0') && cat.count > 0)
+    .filter(cat => cat.parent_id === parseInt(categoryId || '0') && cat.count > 0)
     .map(apiCat => ({
       id: apiCat.id,
       name: apiCat.name,
