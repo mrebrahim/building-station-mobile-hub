@@ -18,6 +18,7 @@ import BecomeSupplier from "./pages/BecomeSupplier";
 import Favorites from "./pages/Favorites";
 import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
+import SyncDashboard from "./pages/SyncDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,7 @@ const App = () => (
           <Route path="/purchase-request" element={<PurchaseRequest />} />
           <Route path="/become-supplier" element={<BecomeSupplier />} />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/sync-dashboard" element={<SyncDashboard />} />
           <Route path="/no-internet" element={<NoInternet />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

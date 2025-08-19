@@ -14,7 +14,171 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      wc_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          image_alt: string | null
+          image_url: string | null
+          menu_order: number | null
+          name: string
+          parent_id: number | null
+          product_count: number | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id: number
+          image_alt?: string | null
+          image_url?: string | null
+          menu_order?: number | null
+          name: string
+          parent_id?: number | null
+          product_count?: number | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          image_alt?: string | null
+          image_url?: string | null
+          menu_order?: number | null
+          name?: string
+          parent_id?: number | null
+          product_count?: number | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      wc_product_categories: {
+        Row: {
+          category_id: number
+          created_at: string | null
+          id: string
+          product_id: number
+        }
+        Insert: {
+          category_id: number
+          created_at?: string | null
+          id?: string
+          product_id: number
+        }
+        Update: {
+          category_id?: number
+          created_at?: string | null
+          id?: string
+          product_id?: number
+        }
+        Relationships: []
+      }
+      wc_products: {
+        Row: {
+          created_at: string | null
+          date_created: string | null
+          date_modified: string | null
+          description: string | null
+          featured: boolean | null
+          id: number
+          image_alt: string | null
+          image_url: string | null
+          manage_stock: boolean | null
+          name: string
+          price: number | null
+          regular_price: number | null
+          sale_price: number | null
+          short_description: string | null
+          sku: string | null
+          slug: string
+          stock_quantity: number | null
+          stock_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_created?: string | null
+          date_modified?: string | null
+          description?: string | null
+          featured?: boolean | null
+          id: number
+          image_alt?: string | null
+          image_url?: string | null
+          manage_stock?: boolean | null
+          name: string
+          price?: number | null
+          regular_price?: number | null
+          sale_price?: number | null
+          short_description?: string | null
+          sku?: string | null
+          slug: string
+          stock_quantity?: number | null
+          stock_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_created?: string | null
+          date_modified?: string | null
+          description?: string | null
+          featured?: boolean | null
+          id?: number
+          image_alt?: string | null
+          image_url?: string | null
+          manage_stock?: boolean | null
+          name?: string
+          price?: number | null
+          regular_price?: number | null
+          sale_price?: number | null
+          short_description?: string | null
+          sku?: string | null
+          slug?: string
+          stock_quantity?: number | null
+          stock_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      wc_sync_logs: {
+        Row: {
+          categories_count: number | null
+          completed_at: string | null
+          errors: Json | null
+          id: string
+          message: string | null
+          products_count: number | null
+          started_at: string | null
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          categories_count?: number | null
+          completed_at?: string | null
+          errors?: Json | null
+          id?: string
+          message?: string | null
+          products_count?: number | null
+          started_at?: string | null
+          status: string
+          sync_type: string
+        }
+        Update: {
+          categories_count?: number | null
+          completed_at?: string | null
+          errors?: Json | null
+          id?: string
+          message?: string | null
+          products_count?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
