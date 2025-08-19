@@ -1,8 +1,23 @@
 
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, RefreshCw } from "lucide-react";
 import HelpButton from "./HelpButton";
+import { useDataRefresh } from "@/hooks/useDataRefresh";
+import { useState } from "react";
 
 const Header = () => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { refreshAllData } = useDataRefresh();
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await refreshAllData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="flex items-center justify-between p-4">
@@ -16,6 +31,14 @@ const Header = () => {
         </div>
         
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+            aria-label="تحديث البيانات"
+          >
+            <RefreshCw className={`w-5 h-5 text-gray-700 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
           <HelpButton />
           <div className="relative">
             <Bell className="w-6 h-6 text-gray-700" />
