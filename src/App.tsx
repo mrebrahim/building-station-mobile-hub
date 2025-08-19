@@ -12,7 +12,6 @@ import FAQ from "./pages/FAQ";
 import Product from "./pages/Product";
 import Categories from "./pages/Categories";
 import CategoryProducts from "./pages/CategoryProducts";
-import SubCategories from "./pages/SubCategories";
 import Brands from "./pages/Brands";
 import PurchaseRequest from "./pages/PurchaseRequest";
 import BecomeSupplier from "./pages/BecomeSupplier";
@@ -42,7 +41,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/product/:id" element={<Product />} />
           <Route path="/categories" element={<Categories />} />
-          <Route path="/category/:categoryId/subcategories" element={<SubCategories />} />
           <Route path="/category/:categoryId" element={<CategoryProducts />} />
           <Route path="/brands" element={<Brands />} />
           <Route path="/cart" element={<Cart />} />
