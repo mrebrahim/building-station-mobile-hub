@@ -1,6 +1,5 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { wooCommerceService } from "@/services/woocommerce";
+import { categoriesService } from "@/services/woocommerce/categories";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
@@ -23,23 +22,23 @@ const FeaturedCategoriesSection = () => {
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
 
-  // Fetch categories from WooCommerce API
+  // Fetch categories from local database
   const { data: apiCategories = [], isLoading } = useQuery({
     queryKey: ['featured-categories'],
-    queryFn: () => wooCommerceService.getCategories({ per_page: 12 }),
+    queryFn: () => categoriesService.getFeaturedCategories(12),
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60, // 1 hour
     retry: 3,
     retryDelay: 1000,
   });
 
-  // Transform API categories to display format, filtering out empty categories
-  const displayCategories = apiCategories
-    .filter(cat => cat.count > 0) // Only show categories with products
-    .map(apiCat => ({
-      id: apiCat.id,
-      name: apiCat.name,
-      count: apiCat.count,
-      image: apiCat.image || undefined
-    }));
+  // Transform categories to display format
+  const displayCategories = apiCategories.map(apiCat => ({
+    id: apiCat.id,
+    name: apiCat.name,
+    count: apiCat.count,
+    image: apiCat.image || undefined
+  }));
 
   // Group categories into slides of 6 (3x2 grid per slide)
   const categoriesPerSlide = 6;

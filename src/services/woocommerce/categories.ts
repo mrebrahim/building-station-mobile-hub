@@ -1,56 +1,62 @@
-
-import { apiClient } from './api';
+import { supabase } from '@/integrations/supabase/client';
 import { Category, CategoryParams } from './types';
 import { mockCategories } from '../mockData';
 
 export class CategoriesService {
   async getCategories(params: CategoryParams = {}): Promise<Category[]> {
     try {
-      const searchParams = new URLSearchParams();
+      console.log('Fetching categories from local database...');
       
-      if (params.page) searchParams.append('page', params.page.toString());
-      if (params.per_page) searchParams.append('per_page', params.per_page.toString());
-      if (params.orderby) searchParams.append('orderby', params.orderby);
-      if (params.order) searchParams.append('order', params.order);
+      let query = supabase
+        .from('wc_categories')
+        .select('*');
 
-      const queryString = searchParams.toString();
-      const endpoint = `/products/categories${queryString ? `?${queryString}` : ''}`;
-      
-      console.log('Attempting to fetch categories from endpoint:', endpoint);
-      const data = await apiClient.makeRequest(endpoint);
-      
-      // Transform the API response to match our Category interface
-      const transformedCategories = data.map((apiCategory: any) => {
-        console.log('Processing category:', apiCategory.name, 'Image data:', apiCategory.image);
-        
-        // Handle different image data structures from WooCommerce API
-        let imageData = undefined;
-        if (apiCategory.image && 
-            apiCategory.image.src && 
-            apiCategory.image.src !== '' && 
-            apiCategory.image._type !== 'undefined' &&
-            apiCategory.image.value !== 'undefined') {
-          imageData = {
-            id: apiCategory.image.id || 0,
-            src: apiCategory.image.src,
-            alt: apiCategory.image.alt || apiCategory.name
-          };
+      // Apply ordering
+      if (params.orderby) {
+        const ascending = params.order === 'asc';
+        query = query.order(params.orderby, { ascending });
+      } else {
+        query = query.order('menu_order', { ascending: true });
+      }
+
+      // Apply pagination
+      if (params.per_page) {
+        query = query.limit(params.per_page);
+        if (params.page && params.page > 1) {
+          const offset = (params.page - 1) * params.per_page;
+          query = query.range(offset, offset + params.per_page - 1);
         }
+      }
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching categories from database:', error);
+        throw error;
+      }
+      
+      // Transform database format to expected format
+      const transformedCategories = (data || []).map(cat => {
+        console.log('Processing category from DB:', cat.name, 'Image URL:', cat.image_url);
         
         return {
-          id: apiCategory.id,
-          name: apiCategory.name,
-          slug: apiCategory.slug,
-          description: apiCategory.description,
-          image: imageData,
-          count: apiCategory.count
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          description: cat.description || '',
+          image: cat.image_url ? {
+            id: 0,
+            src: cat.image_url,
+            alt: cat.image_alt || cat.name
+          } : undefined,
+          count: cat.product_count || 0
         };
       });
       
-      console.log('Successfully fetched and transformed categories:', transformedCategories);
+      console.log('Successfully fetched categories from database:', transformedCategories.length);
       return transformedCategories;
     } catch (error) {
-      console.log('Categories API failed, using mock categories due to error:', error.message);
+      console.log('Database categories failed, using mock categories due to error:', error.message);
       let filteredCategories = [...mockCategories];
       
       if (params.per_page) {
@@ -58,6 +64,80 @@ export class CategoriesService {
       }
       
       return filteredCategories;
+    }
+  }
+
+  // Get featured categories (with images and products)
+  async getFeaturedCategories(limit: number = 12): Promise<Category[]> {
+    try {
+      console.log('Fetching featured categories from database...');
+      
+      const { data, error } = await supabase
+        .from('wc_categories')
+        .select('*')
+        .not('image_url', 'is', null)
+        .gt('product_count', 0)
+        .order('product_count', { ascending: false })
+        .limit(limit);
+      
+      if (error) {
+        console.error('Error fetching featured categories:', error);
+        throw error;
+      }
+      
+      const transformedCategories = (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description || '',
+        image: {
+          id: 0,
+          src: cat.image_url,
+          alt: cat.image_alt || cat.name
+        },
+        count: cat.product_count || 0
+      }));
+      
+      console.log('Successfully fetched featured categories:', transformedCategories.length);
+      return transformedCategories;
+    } catch (error) {
+      console.error('Failed to fetch featured categories:', error);
+      // Return first few mock categories with images as fallback
+      return mockCategories.filter(cat => cat.image).slice(0, limit);
+    }
+  }
+
+  // Get category by ID
+  async getCategoryById(id: number): Promise<Category | null> {
+    try {
+      const { data, error } = await supabase
+        .from('wc_categories')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching category:', error);
+        throw error;
+      }
+      
+      if (!data) return null;
+      
+      return {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        description: data.description || '',
+        image: data.image_url ? {
+          id: 0,
+          src: data.image_url,
+          alt: data.image_alt || data.name
+        } : undefined,
+        count: data.product_count || 0
+      };
+    } catch (error) {
+      console.error('Failed to fetch category:', error);
+      return null;
     }
   }
 }
