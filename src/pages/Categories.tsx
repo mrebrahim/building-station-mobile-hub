@@ -15,14 +15,15 @@ const Categories = () => {
     retryDelay: 1000,
   });
 
-  // Transform API categories to display format, filtering out empty categories
+  // Transform API categories to display format, filtering for main categories only
   const displayCategories = apiCategories
-    .filter(cat => cat.count > 0) // Only show categories with products
+    .filter(cat => cat.count > 0 && (cat.parent === 0 || !cat.parent)) // Only show parent categories with products
     .map(apiCat => ({
       id: apiCat.id,
       name: apiCat.name,
       count: apiCat.count,
-      image: apiCat.image || undefined
+      image: apiCat.image || undefined,
+      parent: apiCat.parent
     }));
 
   console.log('All API Categories:', apiCategories);

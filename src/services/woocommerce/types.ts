@@ -36,6 +36,7 @@ export interface Category {
     alt: string;
   };
   count: number;
+  parent?: number;
 }
 
 export interface Order {

@@ -14,7 +14,7 @@ interface CategoryCardProps {
 
 const CategoryCard = ({ category }: CategoryCardProps) => {
   return (
-    <Link to={`/category/${category.id}`} className="block">
+    <Link to={`/category/${category.id}/subcategories`} className="block">
       <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
         <div className="w-14 h-14 bg-gray-50 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden">
           {category.image && category.image.src ? (
