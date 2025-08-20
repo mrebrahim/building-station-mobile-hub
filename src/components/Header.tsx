@@ -23,10 +23,10 @@ const Header = () => {
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">B</span>
             </div>
-            <span className="text-xl font-bold text-red-500">Building Station</span>
+            <span className="text-xl font-bold text-primary">Building Station</span>
           </div>
         </div>
         
@@ -42,8 +42,8 @@ const Header = () => {
           <HelpButton />
           <div className="relative">
             <Bell className="w-6 h-6 text-gray-700" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs">2</span>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-primary-foreground text-xs">2</span>
             </div>
           </div>
         </div>
@@ -56,7 +56,7 @@ const Header = () => {
           <input
             type="text"
             placeholder="البحث عن المنتجات..."
-            className="w-full bg-gray-100 border-0 rounded-full py-3 pr-12 pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full bg-gray-100 border-0 rounded-full py-3 pr-12 pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
