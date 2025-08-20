@@ -8,6 +8,7 @@ import ShortcutsGrid from "@/components/ShortcutsGrid";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import CategoriesSection from "@/components/CategoriesSection";
+import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
 
 const Index = () => {
@@ -80,6 +81,7 @@ const Index = () => {
         categories={displayCategories} 
         isLoading={categoriesLoading} 
       />
+      <PartnersSection />
       <BottomNavigation />
     </div>
   );
