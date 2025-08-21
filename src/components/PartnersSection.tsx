@@ -23,6 +23,8 @@ const PartnersSection = () => {
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
   const autoPlayRef = useRef<NodeJS.Timeout>();
+  const [validPartners, setValidPartners] = useState<any[]>([]);
+  const [loadingImages, setLoadingImages] = useState(true);
 
   const { data: partners = [], isLoading, error } = useQuery({
     queryKey: ['partners'],
@@ -31,6 +33,48 @@ const PartnersSection = () => {
     refetchOnWindowFocus: false,
     retry: 2,
   });
+
+  // Filter partners with valid images
+  useEffect(() => {
+    if (partners.length === 0) {
+      setValidPartners([]);
+      setLoadingImages(false);
+      return;
+    }
+
+    const checkImages = async () => {
+      const validPartnersArray: any[] = [];
+      
+      for (const partner of partners) {
+        const imageUrl = logoMap[partner.name] || partner.logo_url;
+        
+        // Check if image exists and is valid
+        try {
+          if (logoMap[partner.name]) {
+            // Local images are always valid
+            validPartnersArray.push(partner);
+          } else if (partner.logo_url) {
+            // For remote images, check if they load
+            await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(true);
+              img.onerror = () => reject(false);
+              img.src = partner.logo_url;
+            });
+            validPartnersArray.push(partner);
+          }
+        } catch {
+          // Skip partners with invalid images
+          console.log(`Skipping partner ${partner.name} due to invalid image`);
+        }
+      }
+      
+      setValidPartners(validPartnersArray);
+      setLoadingImages(false);
+    };
+
+    checkImages();
+  }, [partners]);
 
   // Initialize carousel API and set up event listeners
   useEffect(() => {
@@ -46,7 +90,7 @@ const PartnersSection = () => {
 
   // Auto-scroll functionality
   useEffect(() => {
-    if (!api || partners.length === 0) return;
+    if (!api || validPartners.length === 0) return;
 
     const startAutoPlay = () => {
       autoPlayRef.current = setInterval(() => {
@@ -80,7 +124,7 @@ const PartnersSection = () => {
         carousel.removeEventListener('mouseleave', startAutoPlay);
       }
     };
-  }, [api, partners.length]);
+  }, [api, validPartners.length]);
 
   const scrollPrev = () => {
     api?.scrollPrev();
@@ -91,13 +135,13 @@ const PartnersSection = () => {
   };
 
 
-  if (isLoading) {
+  if (isLoading || loadingImages) {
     return (
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-foreground">شركاؤنا</h2>
           <div className="flex justify-center items-center space-x-4 rtl:space-x-reverse">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="w-48 h-24 bg-muted rounded-lg animate-pulse" />
             ))}
           </div>
@@ -106,7 +150,7 @@ const PartnersSection = () => {
     );
   }
 
-  if (error || partners.length === 0) {
+  if (error || validPartners.length === 0) {
     return null;
   }
 
@@ -130,7 +174,7 @@ const PartnersSection = () => {
             }}
           >
             <CarouselContent className="-mr-2 md:-mr-4">
-              {partners.map((partner) => (
+              {validPartners.map((partner) => (
                 <CarouselItem 
                   key={partner.id} 
                   className="pr-2 md:pr-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
@@ -147,18 +191,7 @@ const PartnersSection = () => {
                       style={{ 
                         maxWidth: '100%', 
                         maxHeight: '100%',
-                        imageRendering: 'crisp-edges',
-                        opacity: 0, 
-                        transition: 'opacity 0.3s ease-in-out'
-                      }}
-                      onLoad={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        img.style.opacity = '1';
-                      }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.opacity = '0.7';
-                        target.src = `https://via.placeholder.com/200x80/e5e7eb/6b7280?text=${encodeURIComponent(partner.name)}`;
+                        imageRendering: 'crisp-edges'
                       }}
                     />
                   </div>
