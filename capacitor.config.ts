@@ -26,6 +26,31 @@ const config: CapacitorConfig = {
       useDialog: true,
     },
   },
+  ios: {
+    webContentsDebuggingEnabled: false,
+    allowsInlineMediaPlayback: true,
+    suppressesIncrementalRendering: false,
+    handleApplicationURL: false,
+    scheme: "app",
+    preferredContentMode: "mobile",
+    scrollEnabled: true,
+    zoom: false,
+    allowsBackForwardNavigationGestures: false,
+    allowsLinkPreview: false,
+    overrideUserAgent: null,
+    backgroundColor: "#ffffff",
+    disallowOverscroll: true
+  },
+  android: {
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
+    appendUserAgent: null,
+    overrideUserAgent: null,
+    backgroundColor: "#ffffff",
+    loggingBehavior: "none",
+    handleApplicationURL: false
+  }
 };
 
 export default config;
