@@ -78,11 +78,6 @@ const PartnersSection = () => {
     api?.scrollNext();
   };
 
-  const handlePartnerClick = (websiteUrl?: string) => {
-    if (websiteUrl) {
-      window.open(websiteUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
 
   if (isLoading) {
     return (
@@ -129,17 +124,12 @@ const PartnersSection = () => {
                   className="pr-2 md:pr-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                 >
                   <div
-                    className={cn(
-                      "bg-card border border-border rounded-lg p-4 h-28 flex items-center justify-center",
-                      "transition-all duration-200 hover:scale-[1.02] hover:shadow-md",
-                      "group cursor-pointer overflow-hidden"
-                    )}
-                    onClick={() => handlePartnerClick(partner.website_url)}
+                    className="bg-card border border-border rounded-lg p-4 h-28 flex items-center justify-center overflow-hidden"
                   >
                     <img
                       src={partner.logo_url}
                       alt={partner.name}
-                      className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                      className="w-full h-full object-contain"
                       loading="eager"
                       decoding="async"
                       style={{ 
