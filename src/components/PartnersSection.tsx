@@ -16,6 +16,8 @@ const PartnersSection = () => {
     queryKey: ['partners'],
     queryFn: partnersService.getActivePartners,
     staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   // Initialize carousel API and set up event listeners
@@ -41,7 +43,7 @@ const PartnersSection = () => {
         } else {
           api.scrollTo(0);
         }
-      }, 4000); // 4 seconds
+      }, 3000); // 3 seconds
     };
 
     const stopAutoPlay = () => {
@@ -116,30 +118,45 @@ const PartnersSection = () => {
               align: "start",
               loop: true,
               direction: "rtl",
+              dragFree: true,
+              containScroll: "trimSnaps",
             }}
           >
             <CarouselContent className="-mr-2 md:-mr-4">
               {partners.map((partner) => (
                 <CarouselItem 
                   key={partner.id} 
-                  className="pr-2 md:pr-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+                  className="pr-2 md:pr-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                 >
                   <div
                     className={cn(
-                      "bg-card border border-border rounded-lg p-6 h-32 flex items-center justify-center",
-                      "transition-all duration-300 hover:scale-105 hover:shadow-lg",
-                      "group cursor-pointer"
+                      "bg-card border border-border rounded-lg p-4 h-28 flex items-center justify-center",
+                      "transition-all duration-200 hover:scale-[1.02] hover:shadow-md",
+                      "group cursor-pointer overflow-hidden"
                     )}
                     onClick={() => handlePartnerClick(partner.website_url)}
                   >
                     <img
                       src={partner.logo_url}
                       alt={partner.name}
-                      className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
+                      className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                      loading="eager"
+                      decoding="async"
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%',
+                        imageRendering: 'crisp-edges',
+                        opacity: 0, 
+                        transition: 'opacity 0.3s ease-in-out'
+                      }}
+                      onLoad={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.style.opacity = '1';
+                      }}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = `https://via.placeholder.com/200x100/e5e7eb/6b7280?text=${encodeURIComponent(partner.name)}`;
+                        target.style.opacity = '0.7';
+                        target.src = `https://via.placeholder.com/200x80/e5e7eb/6b7280?text=${encodeURIComponent(partner.name)}`;
                       }}
                     />
                   </div>
