@@ -6,6 +6,18 @@ import { Button } from "@/components/ui/button";
 import { partnersService } from "@/services/partners";
 import { cn } from "@/lib/utils";
 
+// Import partner logos
+import arkaLogo from "@/assets/arka-logo.png";
+import itacaLogo from "@/assets/itaca-logo.png";
+import asteenLogo from "@/assets/asteeno-logo.png";
+
+// Logo mapping for local images
+const logoMap: Record<string, string> = {
+  'ARKA': arkaLogo,
+  'ITACA': itacaLogo,
+  'Asteeno Ceramics': asteenLogo,
+};
+
 const PartnersSection = () => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -127,7 +139,7 @@ const PartnersSection = () => {
                     className="bg-card border border-border rounded-lg p-4 h-28 flex items-center justify-center overflow-hidden"
                   >
                     <img
-                      src={partner.logo_url}
+                      src={logoMap[partner.name] || partner.logo_url}
                       alt={partner.name}
                       className="w-full h-full object-contain"
                       loading="eager"
