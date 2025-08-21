@@ -13,9 +13,9 @@ import asteenLogo from "@/assets/asteeno-logo.png";
 
 // Logo mapping for local images
 const logoMap: Record<string, string> = {
-  'ARKA': arkaLogo,
-  'ITACA': itacaLogo,
-  'Asteeno Ceramics': asteenLogo,
+  'arka-logo': arkaLogo,
+  'itaca-logo': itacaLogo,
+  'asteeno-logo': asteenLogo,
 };
 
 const PartnersSection = () => {
@@ -23,8 +23,6 @@ const PartnersSection = () => {
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
   const autoPlayRef = useRef<NodeJS.Timeout>();
-  const [validPartners, setValidPartners] = useState<any[]>([]);
-  const [loadingImages, setLoadingImages] = useState(true);
 
   const { data: partners = [], isLoading, error } = useQuery({
     queryKey: ['partners'],
@@ -34,47 +32,10 @@ const PartnersSection = () => {
     retry: 2,
   });
 
-  // Filter partners with valid images
-  useEffect(() => {
-    if (partners.length === 0) {
-      setValidPartners([]);
-      setLoadingImages(false);
-      return;
-    }
-
-    const checkImages = async () => {
-      const validPartnersArray: any[] = [];
-      
-      for (const partner of partners) {
-        const imageUrl = logoMap[partner.name] || partner.logo_url;
-        
-        // Check if image exists and is valid
-        try {
-          if (logoMap[partner.name]) {
-            // Local images are always valid
-            validPartnersArray.push(partner);
-          } else if (partner.logo_url) {
-            // For remote images, check if they load
-            await new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = () => resolve(true);
-              img.onerror = () => reject(false);
-              img.src = partner.logo_url;
-            });
-            validPartnersArray.push(partner);
-          }
-        } catch {
-          // Skip partners with invalid images
-          console.log(`Skipping partner ${partner.name} due to invalid image`);
-        }
-      }
-      
-      setValidPartners(validPartnersArray);
-      setLoadingImages(false);
-    };
-
-    checkImages();
-  }, [partners]);
+  // Filter partners that have valid logos
+  const validPartners = partners.filter(partner => 
+    logoMap[partner.logo_url] || partner.logo_url
+  );
 
   // Initialize carousel API and set up event listeners
   useEffect(() => {
@@ -134,8 +95,7 @@ const PartnersSection = () => {
     api?.scrollNext();
   };
 
-
-  if (isLoading || loadingImages) {
+  if (isLoading) {
     return (
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
@@ -174,51 +134,67 @@ const PartnersSection = () => {
             }}
           >
             <CarouselContent className="-mr-2 md:-mr-4">
-              {validPartners.map((partner) => (
-                <CarouselItem 
-                  key={partner.id} 
-                  className="pr-2 md:pr-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
-                >
-                  <div
-                    className="bg-card border border-border rounded-lg p-4 h-28 flex items-center justify-center overflow-hidden"
+              {validPartners.map((partner) => {
+                const logoSrc = logoMap[partner.logo_url] || partner.logo_url;
+                
+                return (
+                  <CarouselItem 
+                    key={partner.id} 
+                    className="pr-2 md:pr-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                   >
-                    <img
-                      src={logoMap[partner.name] || partner.logo_url}
-                      alt={partner.name}
-                      className="w-full h-full object-contain"
-                      loading="eager"
-                      decoding="async"
-                      style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '100%',
-                        imageRendering: 'crisp-edges'
-                      }}
-                    />
-                  </div>
-                </CarouselItem>
-              ))}
+                    <div className="bg-card border border-border rounded-lg p-4 h-28 flex items-center justify-center overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                      {logoSrc ? (
+                        <img
+                          src={logoSrc}
+                          alt={partner.name}
+                          className="w-full h-full object-contain"
+                          loading="eager"
+                          decoding="async"
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '100%',
+                            imageRendering: 'crisp-edges'
+                          }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-sm font-medium">
+                          {partner.name}
+                        </div>
+                      )}
+                    </div>
+                  </CarouselItem>
+                );
+              })}
             </CarouselContent>
 
             {/* Navigation Buttons */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-2 hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
-              onClick={scrollPrev}
-              aria-label="الشريك السابق"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+            {validPartners.length > 1 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-2 hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
+                  onClick={scrollPrev}
+                  aria-label="الشريك السابق"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
 
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-2 hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
-              onClick={scrollNext}
-              aria-label="الشريك التالي"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-2 hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
+                  onClick={scrollNext}
+                  aria-label="الشريك التالي"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </Carousel>
 
           {/* Pagination Dots */}
