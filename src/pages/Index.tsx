@@ -4,7 +4,6 @@ import { wooCommerceService } from "@/services/woocommerce";
 import Header from "@/components/Header";
 import FeaturedCategoriesSection from "@/components/FeaturedCategoriesSection";
 import Banner from "@/components/Banner";
-import ShortcutsGrid from "@/components/ShortcutsGrid";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import CategoriesSection from "@/components/CategoriesSection";
@@ -58,7 +57,6 @@ const Index = () => {
       <Header />
       <Banner />
       <FeaturedCategoriesSection />
-      <ShortcutsGrid />
       <BrandsSection />
       
       {/* Show featured products if available */}
