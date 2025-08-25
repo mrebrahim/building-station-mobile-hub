@@ -33,17 +33,15 @@ const FeaturedCategoriesSection = () => {
   });
 
   // Transform categories to display format
-  const displayCategories = apiCategories
-    .filter(cat => cat.name !== 'الاختصارات') // Filter out shortcuts category
-    .map(apiCat => ({
-      id: apiCat.id,
-      name: apiCat.name,
-      slug: apiCat.slug || '',
-      description: apiCat.description || '',
-      count: apiCat.count,
-      image: apiCat.image || undefined,
-      parent: apiCat.parent || 0
-    }));
+  const displayCategories = apiCategories.map(apiCat => ({
+    id: apiCat.id,
+    name: apiCat.name,
+    slug: apiCat.slug || '',
+    description: apiCat.description || '',
+    count: apiCat.count,
+    image: apiCat.image || undefined,
+    parent: apiCat.parent || 0
+  }));
 
   // Group categories into slides of 6 (3x2 grid per slide)
   const categoriesPerSlide = 6;

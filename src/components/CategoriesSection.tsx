@@ -15,9 +15,6 @@ interface CategoriesSectionProps {
 }
 
 const CategoriesSection = ({ categories, isLoading }: CategoriesSectionProps) => {
-  // Filter out shortcuts category from displayed categories
-  const filteredCategories = categories.filter(cat => cat.name !== 'الاختصارات');
-
   return (
     <div className="px-4 mb-20">
       <div className="flex items-center justify-between mb-4">
@@ -39,9 +36,9 @@ const CategoriesSection = ({ categories, isLoading }: CategoriesSectionProps) =>
             </div>
           ))}
         </div>
-      ) : filteredCategories.length > 0 ? (
+      ) : categories.length > 0 ? (
         <div className="grid grid-cols-3 gap-3">
-          {filteredCategories.map((category) => (
+          {categories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
         </div>

@@ -41,25 +41,23 @@ export class CategoriesService {
       }
       
       // Transform database format to expected format
-      const transformedCategories = (data || [])
-        .filter(cat => cat.name !== 'الاختصارات') // Hide shortcuts category
-        .map(cat => {
-          console.log('Processing category from DB:', cat.name, 'Image URL:', cat.image_url);
-          
-          return {
-            id: cat.id,
-            name: cat.name,
-            slug: cat.slug,
-            description: cat.description || '',
-            image: cat.image_url ? {
-              id: 0,
-              src: cat.image_url,
-              alt: cat.image_alt || cat.name
-            } : undefined,
-            count: cat.product_count || 0,
-            parent: cat.parent_id || 0
-          };
-        });
+      const transformedCategories = (data || []).map(cat => {
+        console.log('Processing category from DB:', cat.name, 'Image URL:', cat.image_url);
+        
+        return {
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          description: cat.description || '',
+          image: cat.image_url ? {
+            id: 0,
+            src: cat.image_url,
+            alt: cat.image_alt || cat.name
+          } : undefined,
+          count: cat.product_count || 0,
+          parent: cat.parent_id || 0
+        };
+      });
       
       console.log('Successfully fetched categories from database:', transformedCategories.length);
       return transformedCategories;
@@ -93,22 +91,20 @@ export class CategoriesService {
         throw error;
       }
       
-      // Transform categories to display format and filter out shortcuts
-      const transformedCategories = (data || [])
-        .filter(cat => cat.name !== 'الاختصارات') // Hide shortcuts category
-        .map(cat => ({
-          id: cat.id,
-          name: cat.name,
-          slug: cat.slug,
-          description: cat.description || '',
-          image: {
-            id: 0,
-            src: cat.image_url,
-            alt: cat.image_alt || cat.name
-          },
-          count: cat.product_count || 0,
-          parent: cat.parent_id || 0
-        }));
+      // Transform categories to display format
+      const transformedCategories = (data || []).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description || '',
+        image: {
+          id: 0,
+          src: cat.image_url,
+          alt: cat.image_alt || cat.name
+        },
+        count: cat.product_count || 0,
+        parent: cat.parent_id || 0
+      }));
       
       console.log('Successfully fetched featured categories:', transformedCategories.length);
       return transformedCategories;
