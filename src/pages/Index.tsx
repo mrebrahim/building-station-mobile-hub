@@ -6,6 +6,7 @@ import FeaturedCategoriesSection from "@/components/FeaturedCategoriesSection";
 import Banner from "@/components/Banner";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
+import InfiniteProductsSection from "@/components/InfiniteProductsSection";
 import CategoriesSection from "@/components/CategoriesSection";
 import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -68,12 +69,8 @@ const Index = () => {
         />
       )}
       
-      {/* Always show catalog products section */}
-      <ProductsSection 
-        products={catalogProducts} 
-        isLoading={catalogLoading} 
-        isFeatured={false} 
-      />
+      {/* Always show infinite scroll catalog products section */}
+      <InfiniteProductsSection title="كتالوج المنتجات" />
       
       <CategoriesSection 
         categories={displayCategories} 
