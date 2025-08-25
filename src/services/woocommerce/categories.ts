@@ -11,6 +11,11 @@ export class CategoriesService {
         .from('wc_categories')
         .select('*');
 
+      // Filter by parent if specified
+      if (params.parent !== undefined) {
+        query = query.eq('parent_id', params.parent);
+      }
+
       // Apply ordering
       if (params.orderby) {
         const ascending = params.order === 'asc';
@@ -36,22 +41,25 @@ export class CategoriesService {
       }
       
       // Transform database format to expected format
-      const transformedCategories = (data || []).map(cat => {
-        console.log('Processing category from DB:', cat.name, 'Image URL:', cat.image_url);
-        
-        return {
-          id: cat.id,
-          name: cat.name,
-          slug: cat.slug,
-          description: cat.description || '',
-          image: cat.image_url ? {
-            id: 0,
-            src: cat.image_url,
-            alt: cat.image_alt || cat.name
-          } : undefined,
-          count: cat.product_count || 0
-        };
-      });
+      const transformedCategories = (data || [])
+        .filter(cat => cat.name !== 'الاختصارات') // Hide shortcuts category
+        .map(cat => {
+          console.log('Processing category from DB:', cat.name, 'Image URL:', cat.image_url);
+          
+          return {
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug,
+            description: cat.description || '',
+            image: cat.image_url ? {
+              id: 0,
+              src: cat.image_url,
+              alt: cat.image_alt || cat.name
+            } : undefined,
+            count: cat.product_count || 0,
+            parent: cat.parent_id || 0
+          };
+        });
       
       console.log('Successfully fetched categories from database:', transformedCategories.length);
       return transformedCategories;
@@ -85,18 +93,22 @@ export class CategoriesService {
         throw error;
       }
       
-      const transformedCategories = (data || []).map(cat => ({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug,
-        description: cat.description || '',
-        image: {
-          id: 0,
-          src: cat.image_url,
-          alt: cat.image_alt || cat.name
-        },
-        count: cat.product_count || 0
-      }));
+      // Transform categories to display format and filter out shortcuts
+      const transformedCategories = (data || [])
+        .filter(cat => cat.name !== 'الاختصارات') // Hide shortcuts category
+        .map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          description: cat.description || '',
+          image: {
+            id: 0,
+            src: cat.image_url,
+            alt: cat.image_alt || cat.name
+          },
+          count: cat.product_count || 0,
+          parent: cat.parent_id || 0
+        }));
       
       console.log('Successfully fetched featured categories:', transformedCategories.length);
       return transformedCategories;
@@ -104,6 +116,27 @@ export class CategoriesService {
       console.error('Failed to fetch featured categories:', error);
       // Return first few mock categories with images as fallback
       return mockCategories.filter(cat => cat.image).slice(0, limit);
+    }
+  }
+
+  // Get subcategories for a parent category
+  async getSubcategories(parentId: number): Promise<Category[]> {
+    return this.getCategories({ parent: parentId });
+  }
+
+  // Check if category has subcategories
+  async hasSubcategories(categoryId: number): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('wc_categories')
+        .select('id')
+        .eq('parent_id', categoryId)
+        .limit(1);
+      
+      if (error) return false;
+      return (data || []).length > 0;
+    } catch (error) {
+      return false;
     }
   }
 
@@ -133,7 +166,8 @@ export class CategoriesService {
           src: data.image_url,
           alt: data.image_alt || data.name
         } : undefined,
-        count: data.product_count || 0
+        count: data.product_count || 0,
+        parent: data.parent_id || 0
       };
     } catch (error) {
       console.error('Failed to fetch category:', error);

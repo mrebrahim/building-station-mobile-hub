@@ -36,6 +36,7 @@ export interface Category {
     alt: string;
   };
   count: number;
+  parent?: number;
 }
 
 export interface Order {
@@ -86,4 +87,5 @@ export interface CategoryParams {
   per_page?: number;
   orderby?: string;
   order?: string;
+  parent?: number;
 }
