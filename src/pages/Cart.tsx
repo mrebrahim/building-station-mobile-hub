@@ -58,7 +58,7 @@ const Cart = () => {
           </Link>
         </div>
       ) : (
-        <div className="p-4 pb-32">
+        <div className="p-4 pb-48">
           {/* Cart Items */}
           <div className="space-y-4 mb-6">
             {cartItems.map((item) => (
@@ -125,7 +125,7 @@ const Cart = () => {
 
       {/* Bottom Checkout Bar */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4">
+        <div className="fixed bottom-20 left-0 right-0 bg-black text-white p-4 mx-4 rounded-t-2xl shadow-lg z-40">
           <div className="flex items-center justify-between mb-3">
             <span className="text-lg font-medium">إتمام الشراء</span>
             <ArrowLeft className="w-5 h-5" />
