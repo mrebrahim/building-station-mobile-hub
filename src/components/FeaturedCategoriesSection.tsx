@@ -23,7 +23,7 @@ const FeaturedCategoriesSection = () => {
   const [count, setCount] = useState(0);
 
   // Fetch categories from local database
-  const { data: apiCategories = [], isLoading } = useQuery({
+  const { data: apiCategories = [], isLoading, error } = useQuery({
     queryKey: ['featured-categories'],
     queryFn: () => categoriesService.getFeaturedCategories(12),
     staleTime: 1000 * 60 * 30, // 30 minutes
@@ -32,16 +32,25 @@ const FeaturedCategoriesSection = () => {
     retryDelay: 1000,
   });
 
+  // Log the data for debugging
+  console.log('Featured Categories Data:', apiCategories);
+  console.log('Featured Categories Loading:', isLoading);
+  console.log('Featured Categories Error:', error);
+
   // Transform categories to display format
-  const displayCategories = apiCategories.map(apiCat => ({
-    id: apiCat.id,
-    name: apiCat.name,
-    slug: apiCat.slug || '',
-    description: apiCat.description || '',
-    count: apiCat.count,
-    image: apiCat.image || undefined,
-    parent: apiCat.parent || 0
-  }));
+  const displayCategories = apiCategories
+    .filter(cat => cat.count > 0) // Only show categories with products
+    .map(apiCat => ({
+      id: apiCat.id,
+      name: apiCat.name,
+      slug: apiCat.slug || '',
+      description: apiCat.description || '',
+      count: apiCat.count,
+      image: apiCat.image || undefined,
+      parent: apiCat.parent || 0
+    }));
+
+  console.log('Display Categories:', displayCategories);
 
   // Group categories into slides of 6 (3x2 grid per slide)
   const categoriesPerSlide = 6;
@@ -98,7 +107,7 @@ const FeaturedCategoriesSection = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {slide.map((category) => (
                       <Link key={category.id} to={`/category/${category.id}`} className="block">
-                        <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:scale-105">
                           <div className="w-full h-24 bg-gray-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
                             {category.image && category.image.src ? (
                               <img 
@@ -108,16 +117,17 @@ const FeaturedCategoriesSection = () => {
                                 onError={(e) => {
                                   console.error("Category image failed to load:", e.currentTarget.src);
                                   e.currentTarget.style.display = 'none';
-                                  e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">📦</span>';
+                                  e.currentTarget.parentElement!.innerHTML = '<span class="text-3xl">📦</span>';
                                 }}
                                 onLoad={() => console.log("Successfully loaded category image:", category.image?.src)}
                                 className="w-full h-full object-cover rounded-xl"
                               />
                             ) : (
-                              <span className="text-2xl">📦</span>
+                              <span className="text-3xl">📦</span>
                             )}
                           </div>
-                          <h3 className="text-sm font-semibold text-gray-800 leading-tight">{category.name}</h3>
+                          <h3 className="text-sm font-semibold text-gray-800 leading-tight mb-1">{category.name}</h3>
+                          <p className="text-xs text-gray-500">{category.count} منتج</p>
                         </div>
                       </Link>
                     ))}
@@ -145,9 +155,14 @@ const FeaturedCategoriesSection = () => {
         </>
       ) : (
         <div className="text-center py-8">
-          <div className="text-4xl mb-4">📦</div>
+          <div className="text-6xl mb-4">📦</div>
           <p className="text-gray-600 mb-4">لا توجد فئات متاحة حالياً</p>
-          <p className="text-sm text-gray-500">يرجى المحاولة لاحقاً أو التحقق من الاتصال بالإنترنت</p>
+          <p className="text-sm text-gray-500 mb-4">يرجى المحاولة لاحقاً أو التحقق من الاتصال بالإنترنت</p>
+          {error && (
+            <div className="text-xs text-red-500 mt-2">
+              خطأ في التحميل: {error.message}
+            </div>
+          )}
         </div>
       )}
     </div>

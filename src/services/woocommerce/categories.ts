@@ -40,8 +40,19 @@ export class CategoriesService {
         throw error;
       }
       
+      if (!data || data.length === 0) {
+        console.log('No categories found in database, using mock categories');
+        let filteredCategories = [...mockCategories];
+        
+        if (params.per_page) {
+          filteredCategories = filteredCategories.slice(0, params.per_page);
+        }
+        
+        return filteredCategories;
+      }
+      
       // Transform database format to expected format
-      const transformedCategories = (data || []).map(cat => {
+      const transformedCategories = data.map(cat => {
         console.log('Processing category from DB:', cat.name, 'Image URL:', cat.image_url);
         
         return {
@@ -83,6 +94,7 @@ export class CategoriesService {
         .select('*')
         .not('image_url', 'is', null)
         .gt('product_count', 0)
+        .eq('parent_id', 0) // Only parent categories
         .order('product_count', { ascending: false })
         .limit(limit);
       
@@ -91,8 +103,13 @@ export class CategoriesService {
         throw error;
       }
       
+      if (!data || data.length === 0) {
+        console.log('No featured categories found in database, using mock categories');
+        return mockCategories.filter(cat => cat.image && cat.count > 0).slice(0, limit);
+      }
+      
       // Transform categories to display format
-      const transformedCategories = (data || []).map(cat => ({
+      const transformedCategories = data.map(cat => ({
         id: cat.id,
         name: cat.name,
         slug: cat.slug,
@@ -110,8 +127,8 @@ export class CategoriesService {
       return transformedCategories;
     } catch (error) {
       console.error('Failed to fetch featured categories:', error);
-      // Return first few mock categories with images as fallback
-      return mockCategories.filter(cat => cat.image).slice(0, limit);
+      // Return mock categories with images as fallback
+      return mockCategories.filter(cat => cat.image && cat.count > 0).slice(0, limit);
     }
   }
 
