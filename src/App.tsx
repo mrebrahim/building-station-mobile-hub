@@ -22,6 +22,7 @@ import Favorites from "./pages/Favorites";
 import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
 import SyncDashboard from "./pages/SyncDashboard";
+import BottomNavigation from "./components/BottomNavigation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <BottomNavigation />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

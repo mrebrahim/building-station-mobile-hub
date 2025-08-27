@@ -304,3 +304,26 @@ body::-webkit-scrollbar {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
 }
+
+/* Safe area for mobile devices bottom navigation */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Add bottom padding to prevent content from being hidden behind bottom nav */
+@media (max-width: 767px) {
+  .min-h-screen {
+    padding-bottom: 85px;
+  }
+}
+
+/* Ensure proper spacing for bottom navigation */
+.pb-32 {
+  padding-bottom: 8rem !important;
+}
+
+@media (min-width: 768px) {
+  .pb-32 {
+    padding-bottom: 2rem !important;
+  }
+}
