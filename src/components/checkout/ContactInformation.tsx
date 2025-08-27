@@ -30,7 +30,7 @@ const ContactInformation = ({ email, onEmailChange }: ContactInformationProps) =
             className="rounded"
           />
           <label htmlFor="newsletter" className="text-sm">
-            أرسل لي أحدث الأخبار والعروض الحصرية من تولمارت!
+            أرسل لي أحدث الأخبار والعروض الحصرية من Building Station!
           </label>
         </div>
       </div>
