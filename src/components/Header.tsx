@@ -24,8 +24,12 @@ const Header = () => {
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">B</span>
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/affbbcc3-4fa8-45ef-839a-50be03b7a27c.png" 
+                alt="Building Station Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="text-xl font-bold text-primary">Building Station</span>
           </div>

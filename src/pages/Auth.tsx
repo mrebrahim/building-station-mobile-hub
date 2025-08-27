@@ -95,8 +95,12 @@ const Auth = () => {
       <div className="p-6">
         {/* Welcome Section */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold text-2xl">B</span>
+          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <img 
+              src="/lovable-uploads/affbbcc3-4fa8-45ef-839a-50be03b7a27c.png" 
+              alt="Building Station Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <h2 className="text-2xl font-bold mb-2">
             {isLogin ? "مرحباً بعودتك!" : "انضم إلينا"}
