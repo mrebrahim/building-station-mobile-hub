@@ -41,17 +41,6 @@ const Categories = () => {
       parent: apiCat.parent || 0
     }));
 
-  const handleSubcategoryExpand = (categoryId: number, subcategories: Category[]) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
-      } else {
-        newSet.add(categoryId);
-      }
-      return newSet;
-    });
-  };
 
   const breadcrumbItems = [
     { name: "جميع الفئات", path: "/categories" }
@@ -116,8 +105,6 @@ const Categories = () => {
               <EnhancedCategoryCard 
                 key={category.id} 
                 category={category}
-                onSubcategoryClick={(subcategories) => handleSubcategoryExpand(category.id, subcategories)}
-                showSubcategories={expandedCategories.has(category.id)}
               />
             ))}
           </div>
