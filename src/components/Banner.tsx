@@ -119,7 +119,7 @@ const Banner = () => {
                     <img 
                       src={banner.image}
                       alt={banner.alt}
-                      className="w-full h-40 sm:h-48 object-cover"
+                      className="w-full h-56 sm:h-64 md:h-72 object-contain bg-gray-50"
                       loading="lazy"
                       onLoad={() => console.log(`Banner image ${index} loaded successfully`)}
                       onError={(e) => {
