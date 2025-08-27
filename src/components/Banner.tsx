@@ -16,15 +16,27 @@ const Banner = () => {
   const banners = [
     {
       id: 1,
-      image: "/lovable-uploads/86d58d52-96fe-4e34-946e-66010b49a622.png",
-      alt: "مجموعتنا - Building Station",
+      image: "/lovable-uploads/72a7be5e-a822-46e1-8a6f-0355c2eb54f4.png",
+      alt: "منتجات ذكية للمنزل - Smart Home",
       link: "/categories"
     },
     {
       id: 2,
-      image: "/lovable-uploads/d7aa46b0-6cd7-4fbb-9007-dbad270642a1.png",
-      alt: "أفضل الماركات العالمية",
-      link: "/brands"
+      image: "/lovable-uploads/f76dd736-8ac1-4779-8be8-9872936b20fd.png",
+      alt: "منتجات كهربائية - Electrical Products",
+      link: "/categories"
+    },
+    {
+      id: 3,
+      image: "/lovable-uploads/56628d8b-5aed-4b3b-add5-bfe495ad6d4d.png",
+      alt: "بديل الخشب - Wood Alternative",
+      link: "/categories"
+    },
+    {
+      id: 4,
+      image: "/lovable-uploads/eaea70a0-753b-4ca1-9317-1b8e8d0729ba.png",
+      alt: "أقفال ذكية - Smart Locks",
+      link: "/categories"
     }
   ];
 
