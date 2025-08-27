@@ -14,6 +14,7 @@ interface UseInfiniteScrollOptions {
   maxProducts?: number;
   triggerDistance?: number;
   loadingDelay?: number;
+  autoLoadLimit?: number; // New: limit for auto loading
 }
 
 interface UseInfiniteScrollReturn {
@@ -24,6 +25,8 @@ interface UseInfiniteScrollReturn {
   error: string | null;
   retry: () => void;
   setSentinelRef: (node: HTMLDivElement | null) => void;
+  loadMore: () => void; // New: manual load more function
+  shouldShowLoadMoreButton: boolean; // New: whether to show load more button
 }
 
 export const useInfiniteScroll = (
@@ -34,7 +37,8 @@ export const useInfiniteScroll = (
     productsPerPage = 12,
     maxProducts = 100,
     triggerDistance = 200,
-    loadingDelay = 500
+    loadingDelay = 500,
+    autoLoadLimit = 30 // Default auto load limit
   } = options;
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -43,6 +47,7 @@ export const useInfiniteScroll = (
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [shouldShowLoadMoreButton, setShouldShowLoadMoreButton] = useState(false);
   
   const loadingRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -79,6 +84,11 @@ export const useInfiniteScroll = (
       const totalLoaded = isInitial ? newProducts.length : products.length + newProducts.length;
       setHasMore(newProducts.length === productsPerPage && totalLoaded < maxProducts);
       
+      // Check if we should switch to manual loading (load more button)
+      if (totalLoaded >= autoLoadLimit && newProducts.length === productsPerPage && totalLoaded < maxProducts) {
+        setShouldShowLoadMoreButton(true);
+      }
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products');
     } finally {
@@ -86,16 +96,16 @@ export const useInfiniteScroll = (
       setIsLoadingMore(false);
       loadingRef.current = false;
     }
-  }, [fetchProducts, productsPerPage, maxProducts, loadingDelay, products.length]);
+  }, [fetchProducts, productsPerPage, maxProducts, loadingDelay, products.length, autoLoadLimit]);
 
   // Load initial products
   useEffect(() => {
     loadProducts(1, true);
   }, []);
 
-  // Setup intersection observer for infinite scroll
+  // Setup intersection observer for infinite scroll (only if not showing load more button)
   useEffect(() => {
-    if (!sentinelRef.current || !hasMore || isLoading) return;
+    if (!sentinelRef.current || !hasMore || isLoading || shouldShowLoadMoreButton) return;
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -120,7 +130,18 @@ export const useInfiniteScroll = (
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoading, loadProducts, triggerDistance]);
+  }, [hasMore, isLoading, loadProducts, triggerDistance, shouldShowLoadMoreButton]);
+
+  // Manual load more function
+  const loadMore = useCallback(() => {
+    if (!loadingRef.current && hasMore) {
+      setPage(prev => {
+        const nextPage = prev + 1;
+        loadProducts(nextPage);
+        return nextPage;
+      });
+    }
+  }, [loadProducts, hasMore]);
 
   const retry = useCallback(() => {
     if (products.length === 0) {
@@ -143,6 +164,8 @@ export const useInfiniteScroll = (
     hasMore,
     error,
     retry,
-    setSentinelRef
+    setSentinelRef,
+    loadMore,
+    shouldShowLoadMoreButton
   };
 };

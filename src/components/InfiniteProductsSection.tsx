@@ -128,12 +128,15 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
     hasMore,
     error,
     retry,
-    setSentinelRef
+    setSentinelRef,
+    loadMore,
+    shouldShowLoadMoreButton
   } = useInfiniteScroll(fetchProducts, {
     productsPerPage: 12,
     maxProducts: 72,
     triggerDistance: 200,
-    loadingDelay: 500
+    loadingDelay: 500,
+    autoLoadLimit: 30 // Auto load only first 30 products
   });
 
   if (isLoading) {
@@ -190,8 +193,21 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
             </div>
           )}
 
-          {/* Sentinel element for intersection observer */}
-          {hasMore && !isLoadingMore && (
+          {/* Load More Button - shows after 30 products */}
+          {shouldShowLoadMoreButton && hasMore && !isLoadingMore && (
+            <div className="text-center mt-8">
+              <Button
+                onClick={loadMore}
+                variant="outline"
+                className="text-primary border-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 text-lg font-medium"
+              >
+                عرض المزيد من المنتجات
+              </Button>
+            </div>
+          )}
+
+          {/* Sentinel element for intersection observer (only for initial auto-load) */}
+          {hasMore && !isLoadingMore && !shouldShowLoadMoreButton && (
             <div
               ref={setSentinelRef}
               className="flex items-center justify-center py-8"
