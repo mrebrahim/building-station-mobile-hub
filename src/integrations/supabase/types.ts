@@ -105,7 +105,22 @@ export type Database = {
           id?: string
           product_id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_wc_product_categories_category_id"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "wc_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_wc_product_categories_product_id"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "wc_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wc_products: {
         Row: {

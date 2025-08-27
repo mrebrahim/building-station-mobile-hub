@@ -11,10 +11,11 @@ const CheckoutFooter = ({ onSubmit, isSubmitting = false }: CheckoutFooterProps)
     <>
       {/* Complete Order Button */}
       <Button 
-        className="w-full bg-black text-white py-3 text-lg font-medium mb-6"
         onClick={onSubmit}
+        disabled={isSubmitting}
+        className="w-full bg-black text-white hover:bg-gray-800 py-3 text-lg font-medium disabled:opacity-50 mb-6"
       >
-        ادفع الآن
+        {isSubmitting ? "جاري المعالجة..." : "ادفع الآن"}
       </Button>
 
       {/* Footer Links */}
