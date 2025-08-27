@@ -70,7 +70,20 @@ const FeaturedCategoriesSection = () => {
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap() + 1);
     });
-  }, [api]);
+
+    // Auto-scroll functionality
+    const autoScroll = setInterval(() => {
+      if (api && slides.length > 1) {
+        const currentIndex = api.selectedScrollSnap();
+        const nextIndex = (currentIndex + 1) % slides.length;
+        api.scrollTo(nextIndex);
+      }
+    }, 5000); // Change slide every 5 seconds
+
+    return () => {
+      clearInterval(autoScroll);
+    };
+  }, [api, slides.length]);
 
   const scrollToSlide = (index: number) => {
     api?.scrollTo(index);
@@ -80,12 +93,12 @@ const FeaturedCategoriesSection = () => {
     <div className="px-4 py-6 bg-white">
       {/* Header with View All button */}
       <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-800">تسوق حسب الفئة</h2>
         <Link to="/categories">
           <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 text-sm px-4 py-2">
             عرض الكل
           </Button>
         </Link>
-        <h2 className="text-xl font-bold text-gray-800">تسوق حسب الفئة</h2>
       </div>
 
       {/* Categories Carousel */}
@@ -100,7 +113,15 @@ const FeaturedCategoriesSection = () => {
         </div>
       ) : displayCategories.length > 0 ? (
         <>
-          <Carousel setApi={setApi} className="w-full mb-6">
+          <Carousel 
+            setApi={setApi} 
+            className="w-full mb-6"
+            opts={{
+              align: "start",
+              loop: true,
+              direction: "rtl"
+            }}
+          >
             <CarouselContent>
               {slides.map((slide, slideIndex) => (
                 <CarouselItem key={slideIndex}>
@@ -139,13 +160,15 @@ const FeaturedCategoriesSection = () => {
           
           {/* Functional Pagination dots */}
           {count > 1 && (
-            <div className="flex justify-center space-x-2">
+            <div className="flex justify-center gap-2">
               {Array.from({ length: count }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => scrollToSlide(index)}
-                  className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    current === index + 1 ? "bg-red-500" : "bg-gray-300 hover:bg-gray-400"
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    current === index + 1 
+                      ? "bg-red-500 scale-110" 
+                      : "bg-gray-300 hover:bg-gray-400 hover:scale-105"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
