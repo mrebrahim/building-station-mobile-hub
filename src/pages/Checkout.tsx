@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import OrderSummaryCard from "@/components/checkout/OrderSummaryCard";
 import ContactInformation from "@/components/checkout/ContactInformation";
@@ -8,8 +10,11 @@ import ShippingMethod from "@/components/checkout/ShippingMethod";
 import PaymentMethod from "@/components/checkout/PaymentMethod";
 import OrderSummaryDetail from "@/components/checkout/OrderSummaryDetail";
 import CheckoutFooter from "@/components/checkout/CheckoutFooter";
+import { wooCommerceService } from "@/services/woocommerce";
 
 const Checkout = () => {
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     country: "العراق",
@@ -47,9 +52,81 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    console.log("Order submitted:", formData);
-    // Handle order submission
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+    
+    if (orderSummary.items.length === 0) {
+      toast.error("السلة فارغة");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Prepare order data for WooCommerce
+      const orderData = {
+        payment_method: formData.codPayment ? "cod" : "bacs",
+        payment_method_title: formData.codPayment ? "الدفع عند الاستلام" : "تحويل بنكي",
+        set_paid: false,
+        billing: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          address_1: formData.street,
+          city: formData.city,
+          state: "",
+          postcode: formData.postalCode,
+          country: "IQ",
+          email: formData.email,
+          phone: formData.phone
+        },
+        shipping: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          address_1: formData.street,
+          city: formData.city,
+          state: "",
+          postcode: formData.postalCode,
+          country: "IQ"
+        },
+        line_items: orderSummary.items.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity
+        }))
+      };
+      
+      console.log("Creating WooCommerce order:", orderData);
+      
+      // Create order through WooCommerce API
+      const response = await wooCommerceService.createOrder(orderData);
+      
+      console.log("WooCommerce order response:", response);
+      
+      if (response && response.id) {
+        toast.success("تم إنشاء الطلب بنجاح!");
+        
+        // Clear cart
+        localStorage.removeItem('cart');
+        
+        // Redirect to success page or order confirmation
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      } else {
+        toast.error("حدث خطأ في إنشاء الطلب");
+      }
+      
+    } catch (error) {
+      console.error("Order creation error:", error);
+      toast.error("حدث خطأ في إنشاء الطلب. يرجى المحاولة مرة أخرى");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,7 +159,7 @@ const Checkout = () => {
           total={orderSummary.total}
         />
 
-        <CheckoutFooter onSubmit={handleSubmit} />
+        <CheckoutFooter onSubmit={handleSubmit} isSubmitting={isSubmitting} />
       </div>
     </div>
   );

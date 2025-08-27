@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 
 interface CheckoutFooterProps {
   onSubmit: () => void;
+  isSubmitting?: boolean;
 }
 
-const CheckoutFooter = ({ onSubmit }: CheckoutFooterProps) => {
+const CheckoutFooter = ({ onSubmit, isSubmitting = false }: CheckoutFooterProps) => {
   return (
     <>
       {/* Complete Order Button */}
