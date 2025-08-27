@@ -10,7 +10,7 @@ import ShippingMethod from "@/components/checkout/ShippingMethod";
 import PaymentMethod from "@/components/checkout/PaymentMethod";
 import OrderSummaryDetail from "@/components/checkout/OrderSummaryDetail";
 import CheckoutFooter from "@/components/checkout/CheckoutFooter";
-import { wooCommerceService } from "@/services/woocommerce";
+import { wooCommerceService } from "@/services/woocommerce/index";
 
 const Checkout = () => {
   const navigate = useNavigate();

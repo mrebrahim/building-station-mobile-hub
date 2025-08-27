@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
+import Auth from "./pages/Auth";
+import Notifications from "./pages/Notifications";
 import FAQ from "./pages/FAQ";
 import Product from "./pages/Product";
 import Categories from "./pages/Categories";
@@ -48,6 +50,8 @@ const App = () => (
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/purchase-request" element={<PurchaseRequest />} />
           <Route path="/become-supplier" element={<BecomeSupplier />} />

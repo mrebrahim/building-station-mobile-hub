@@ -28,26 +28,14 @@ const Profile = () => {
 
         {/* Login/Register Button */}
         <div className="mb-8">
-          <Button className="w-full bg-black text-white py-4 rounded-xl text-lg">
-            <LogOut className="w-5 h-5 ml-2" />
-            تسجيل الدخول / الاشتراك
-          </Button>
+          <Link to="/auth">
+            <Button className="w-full bg-black text-white py-4 rounded-xl text-lg">
+              <LogOut className="w-5 h-5 ml-2" />
+              تسجيل الدخول / الاشتراك
+            </Button>
+          </Link>
         </div>
 
-        {/* Settings Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4 text-right">الإعدادات</h3>
-          
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-              <div className="flex items-center gap-3">
-                <span className="font-medium">اللغة</span>
-                <Globe className="w-5 h-5 text-gray-600" />
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Contact Section */}
         <div className="mb-6">
