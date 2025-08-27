@@ -16,32 +16,26 @@ const Banner = () => {
   const banners = [
     {
       id: 1,
-      image: "/lovable-uploads/eeac32b1-5f66-44ad-8b03-d443120441fa.png",
-      alt: "أقفال الذكية - Smart Locks",
-      link: "/categories"
-    },
-    {
-      id: 2,
-      image: "/lovable-uploads/72a7be5e-a822-46e1-8a6f-0355c2eb54f4.png",
+      image: "/lovable-uploads/08cdb277-aaf8-4718-8ded-4416b4a139dd.png",
       alt: "منتجات ذكية للمنزل - Smart Home",
       link: "/categories"
     },
     {
+      id: 2,
+      image: "/lovable-uploads/fab20bd4-291b-4443-b205-538f661653e6.png",
+      alt: "بديل الخشب - Wood Alternative",
+      link: "/categories"
+    },
+    {
       id: 3,
-      image: "/lovable-uploads/f76dd736-8ac1-4779-8be8-9872936b20fd.png",
+      image: "/lovable-uploads/23424498-bc2b-4b87-a86c-e436f4557529.png",
       alt: "منتجات كهربائية - Electrical Products",
       link: "/categories"
     },
     {
       id: 4,
-      image: "/lovable-uploads/56628d8b-5aed-4b3b-add5-bfe495ad6d4d.png",
-      alt: "بديل الخشب - Wood Alternative",
-      link: "/categories"
-    },
-    {
-      id: 5,
-      image: "/lovable-uploads/eaea70a0-753b-4ca1-9317-1b8e8d0729ba.png",
-      alt: "أقفال ذكية - Smart Locks",
+      image: "/lovable-uploads/6edd8239-2fb3-40c0-8f31-ed22debb8435.png",
+      alt: "أقفال الذكية - Smart Locks",
       link: "/categories"
     }
   ];
