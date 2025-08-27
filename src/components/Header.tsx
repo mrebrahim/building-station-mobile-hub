@@ -24,14 +24,14 @@ const Header = () => {
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 flex items-center justify-center">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full overflow-hidden bg-white shadow-sm">
               <img 
                 src="/lovable-uploads/affbbcc3-4fa8-45ef-839a-50be03b7a27c.png" 
                 alt="Building Station Logo" 
-                className="w-full h-full object-contain"
+                className="w-8 h-8 object-contain"
               />
             </div>
-            <span className="text-xl font-bold text-primary">Building Station</span>
+            <span className="text-xl font-bold text-navy-blue">Building Station</span>
           </div>
         </div>
         

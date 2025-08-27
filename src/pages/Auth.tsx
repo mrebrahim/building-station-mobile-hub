@@ -95,11 +95,11 @@ const Auth = () => {
       <div className="p-6">
         {/* Welcome Section */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4 rounded-full overflow-hidden bg-white shadow-lg">
             <img 
               src="/lovable-uploads/affbbcc3-4fa8-45ef-839a-50be03b7a27c.png" 
               alt="Building Station Logo" 
-              className="w-full h-full object-contain"
+              className="w-16 h-16 object-contain"
             />
           </div>
           <h2 className="text-2xl font-bold mb-2">
