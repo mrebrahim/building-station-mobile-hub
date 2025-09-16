@@ -1,5 +1,104 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Hook for real-time data updates
+export const useRealTimeUpdates = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Subscribe to categories changes
+    const categoriesChannel = supabase
+      .channel('wc-categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wc_categories'
+        },
+        (payload) => {
+          console.log('Categories changed:', payload);
+          // Invalidate all category-related queries
+          queryClient.invalidateQueries({ queryKey: ['wc-categories'] });
+          queryClient.invalidateQueries({ queryKey: ['wc-featured-categories'] });
+          queryClient.invalidateQueries({ queryKey: ['wc-category'] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to products changes
+    const productsChannel = supabase
+      .channel('wc-products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wc_products'
+        },
+        (payload) => {
+          console.log('Products changed:', payload);
+          // Invalidate all product-related queries
+          queryClient.invalidateQueries({ queryKey: ['wc-products'] });
+          queryClient.invalidateQueries({ queryKey: ['wc-product'] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to product-category relationships changes
+    const productCategoriesChannel = supabase
+      .channel('wc-product-categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wc_product_categories'
+        },
+        (payload) => {
+          console.log('Product categories changed:', payload);
+          // Invalidate product and category queries
+          queryClient.invalidateQueries({ queryKey: ['wc-products'] });
+          queryClient.invalidateQueries({ queryKey: ['wc-categories'] });
+          queryClient.invalidateQueries({ queryKey: ['wc-featured-categories'] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to sync logs changes
+    const syncLogsChannel = supabase
+      .channel('wc-sync-logs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wc_sync_logs'
+        },
+        (payload) => {
+          console.log('Sync logs changed:', payload);
+          queryClient.invalidateQueries({ queryKey: ['wc-sync-logs'] });
+          
+          // If sync completed successfully, refresh all data
+          if (payload.new && typeof payload.new === 'object' && 'status' in payload.new && payload.new.status === 'success') {
+            queryClient.invalidateQueries({ queryKey: ['wc-products'] });
+            queryClient.invalidateQueries({ queryKey: ['wc-categories'] });
+            queryClient.invalidateQueries({ queryKey: ['wc-featured-categories'] });
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      supabase.removeChannel(categoriesChannel);
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(productCategoriesChannel);
+      supabase.removeChannel(syncLogsChannel);
+    };
+  }, [queryClient]);
+};
 
 // Hook to get categories from database
 export const useCategories = () => {
@@ -18,8 +117,8 @@ export const useCategories = () => {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
 };
 
@@ -73,8 +172,8 @@ export const useProducts = (options?: {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 1, // 1 minute
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
 };
 
@@ -98,8 +197,8 @@ export const useFeaturedCategories = (limit: number = 12) => {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
 };
 
@@ -121,8 +220,8 @@ export const useSyncLogs = (limit: number = 10) => {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 30, // 30 seconds
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
@@ -169,8 +268,8 @@ export const useProduct = (productId: number) => {
       
       return data;
     },
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 1, // 1 minute
+    gcTime: 1000 * 60 * 10, // 10 minutes
     enabled: !!productId,
   });
 };

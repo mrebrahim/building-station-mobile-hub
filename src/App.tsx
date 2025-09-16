@@ -1,4 +1,5 @@
 
+import { useRealTimeUpdates } from "@/hooks/useWooCommerceData";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,11 +25,17 @@ import NotFound from "./pages/NotFound";
 import SyncDashboard from "./pages/SyncDashboard";
 import BottomNavigation from "./components/BottomNavigation";
 
+// Component to handle real-time updates
+const RealTimeProvider = ({ children }: { children: React.ReactNode }) => {
+  useRealTimeUpdates();
+  return <>{children}</>;
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes
+      staleTime: 1 * 60 * 1000, // 1 minute
+      gcTime: 10 * 60 * 1000, // 10 minutes
       refetchOnWindowFocus: true,
       refetchOnMount: true,
     },
@@ -37,34 +44,36 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/product/:id" element={<Product />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/subcategories/:categoryId" element={<SubCategories />} />
-          <Route path="/category/:categoryId" element={<CategoryProducts />} />
-          <Route path="/brands" element={<Brands />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/purchase-request" element={<PurchaseRequest />} />
-          <Route path="/become-supplier" element={<BecomeSupplier />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/sync-dashboard" element={<SyncDashboard />} />
-          <Route path="/no-internet" element={<NoInternet />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <BottomNavigation />
-      </BrowserRouter>
-    </TooltipProvider>
+    <RealTimeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/product/:id" element={<Product />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/subcategories/:categoryId" element={<SubCategories />} />
+            <Route path="/category/:categoryId" element={<CategoryProducts />} />
+            <Route path="/brands" element={<Brands />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/purchase-request" element={<PurchaseRequest />} />
+            <Route path="/become-supplier" element={<BecomeSupplier />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/sync-dashboard" element={<SyncDashboard />} />
+            <Route path="/no-internet" element={<NoInternet />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <BottomNavigation />
+        </BrowserRouter>
+      </TooltipProvider>
+    </RealTimeProvider>
   </QueryClientProvider>
 );
 
