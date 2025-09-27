@@ -24,13 +24,17 @@ const PaymentMethod = ({ codPayment, onCodPaymentChange }: PaymentMethodProps) =
               </div>
             </div>
             <div className="flex gap-2 mb-4">
-              <img src="/placeholder.svg" alt="Mastercard" className="w-8 h-6 object-contain" />
-              <img src="/placeholder.svg" alt="Visa" className="w-8 h-6 object-contain" />
+              <div className="w-12 h-8 bg-gradient-to-r from-red-400 to-orange-400 rounded flex items-center justify-center text-white text-xs font-bold">
+                MC
+              </div>
+              <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-xs font-bold">
+                VISA
+              </div>
             </div>
             <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
               <div className="text-4xl mb-2">💳</div>
               <p className="text-sm text-gray-600">
-                After clicking "ادفع الآن", you will be redirected to خيارات الدفع to complete your purchase securely.
+                بعد النقر على "ادفع الآن"، سيتم توجيهك إلى صفحة الدفع الآمنة لإكمال عملية الشراء.
               </p>
             </div>
           </CardContent>

@@ -35,14 +35,14 @@ const NoInternet = () => {
 
             {/* Title */}
             <h1 className="text-xl font-semibold text-gray-800 mb-4">
-              Oops! No Internet!
+              عذراً! لا يوجد اتصال بالإنترنت!
             </h1>
 
             {/* Description */}
             <div className="text-gray-600 mb-8 space-y-1">
-              <p>Looks like you are facing a temporary</p>
-              <p>network interruption.</p>
-              <p>Or check your network connection.</p>
+              <p>يبدو أنك تواجه انقطاعاً مؤقتاً</p>
+              <p>في الشبكة.</p>
+              <p>يرجى التحقق من اتصالك بالإنترنت.</p>
             </div>
 
             {/* Retry Button */}
@@ -51,7 +51,7 @@ const NoInternet = () => {
               className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full flex items-center gap-2 mx-auto"
             >
               <RefreshCw className="w-4 h-4" />
-              Retry
+              إعادة المحاولة
             </Button>
           </CardContent>
         </Card>
