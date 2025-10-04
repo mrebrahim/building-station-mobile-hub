@@ -1,6 +1,7 @@
-
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { wooCommerceService } from "@/services/woocommerce";
+import { useDataRefresh } from "@/hooks/useDataRefresh";
 import Header from "@/components/Header";
 import FeaturedCategoriesSection from "@/components/FeaturedCategoriesSection";
 import Banner from "@/components/Banner";
@@ -12,6 +13,16 @@ import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
 
 const Index = () => {
+  const { refreshAllData } = useDataRefresh();
+  const hasRefreshed = useRef(false);
+
+  // Auto-refresh data on app open (once per session)
+  useEffect(() => {
+    if (!hasRefreshed.current) {
+      hasRefreshed.current = true;
+      refreshAllData();
+    }
+  }, [refreshAllData]);
   // Fetch categories from WooCommerce
   const { data: apiCategories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories'],
