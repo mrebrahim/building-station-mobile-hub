@@ -105,12 +105,17 @@ const Product = () => {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 rtl flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 rtl flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-xl font-bold mb-2">المنتج غير موجود</h2>
-          <p className="text-gray-600 mb-4">عذراً، لا يمكن العثور على هذا المنتج</p>
+          <div className="mb-6">
+            <span className="text-8xl">📦</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-3 text-gray-800">المنتج غير موجود</h2>
+          <p className="text-gray-600 mb-6">عذراً، لا يمكن العثور على هذا المنتج</p>
           <Link to="/">
-            <Button>العودة للرئيسية</Button>
+            <Button className="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-3 text-lg rounded-lg">
+              العودة للرئيسية
+            </Button>
           </Link>
         </div>
       </div>
