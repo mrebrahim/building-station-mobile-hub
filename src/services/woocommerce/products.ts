@@ -144,7 +144,7 @@ export class ProductsService {
         .from('wc_products')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching product:', error);
