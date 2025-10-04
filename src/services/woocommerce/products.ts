@@ -138,7 +138,7 @@ export class ProductsService {
 
   async getProduct(id: number): Promise<Product> {
     try {
-      console.log('Fetching product by ID from database:', id);
+      console.log('🔍 Fetching product by ID from database:', id);
       
       const { data, error } = await supabase
         .from('wc_products')
@@ -146,14 +146,19 @@ export class ProductsService {
         .eq('id', id)
         .maybeSingle();
       
+      console.log('📦 Product query result:', { data, error });
+      
       if (error) {
-        console.error('Error fetching product:', error);
+        console.error('❌ Error fetching product:', error);
         throw error;
       }
       
       if (!data) {
+        console.error(`❌ Product with id ${id} not found in database`);
         throw new Error(`Product with id ${id} not found`);
       }
+      
+      console.log('✅ Found product in database:', data.name);
       
       // Get categories for this product
       const { data: productCategories } = await supabase
@@ -192,15 +197,17 @@ export class ProductsService {
         featured: data.featured || false
       };
       
-      console.log('Successfully fetched product by ID:', transformedProduct.name);
+      console.log('✅ Successfully transformed product:', transformedProduct.name);
       return transformedProduct;
     } catch (error) {
-      console.error('Failed to fetch product by ID:', error);
+      console.error('💥 Failed to fetch product by ID:', id, error);
       // Try to find in mock data as fallback
       const mockProduct = mockProducts.find(p => p.id === id);
       if (!mockProduct) {
+        console.error('💥 Product not found in mock data either');
         throw new Error(`Product with id ${id} not found`);
       }
+      console.log('📦 Using mock product as fallback');
       return mockProduct;
     }
   }

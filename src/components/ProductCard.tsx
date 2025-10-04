@@ -94,7 +94,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </button>
       
       {/* Product Image */}
-      <Link to={`/product/${product.id}`}>
+      <Link to={`/product/${product.id}`} onClick={() => console.log('🔗 Navigating to product:', product.id, product.name)}>
         <div className="w-full h-40 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
           {product.images && product.images.length > 0 && product.images[0].src ? (
             <img
