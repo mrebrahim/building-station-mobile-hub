@@ -117,7 +117,7 @@ export const useCategories = () => {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 30, // 30 seconds
     gcTime: 1000 * 60 * 10, // 10 minutes
   });
 };
@@ -172,7 +172,7 @@ export const useProducts = (options?: {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 1, // 1 minute
+    staleTime: 1000 * 30, // 30 seconds
     gcTime: 1000 * 60 * 10, // 10 minutes
   });
 };
@@ -197,7 +197,7 @@ export const useFeaturedCategories = (limit: number = 12) => {
       
       return data || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 30, // 30 seconds
     gcTime: 1000 * 60 * 10, // 10 minutes
   });
 };

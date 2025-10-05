@@ -1,30 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 import { wooCommerceService } from "@/services/woocommerce";
-import { useDataRefresh } from "@/hooks/useDataRefresh";
 import Header from "@/components/Header";
 import FeaturedCategoriesSection from "@/components/FeaturedCategoriesSection";
 import Banner from "@/components/Banner";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import InfiniteProductsSection from "@/components/InfiniteProductsSection";
-
 import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
 
 const Index = () => {
-  const { refreshAllData } = useDataRefresh();
-  const hasRefreshed = useRef(false);
-
-  // Auto-refresh data on app open (once per session)
-  useEffect(() => {
-    if (!hasRefreshed.current) {
-      hasRefreshed.current = true;
-      refreshAllData();
-    }
-  }, [refreshAllData]);
   // Fetch categories from WooCommerce
-  const { data: apiCategories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
+  const { data: apiCategories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => wooCommerceService.getCategories({ per_page: 18 }),
     retry: 3,
@@ -57,12 +44,6 @@ const Index = () => {
       count: apiCat.count,
       image: apiCat.image || undefined
     }));
-
-  console.log('API Categories:', apiCategories);
-  console.log('Display Categories:', displayCategories);
-  console.log('Featured Products:', featuredProducts);
-  console.log('Catalog Products:', catalogProducts);
-  console.log('Categories Error:', categoriesError);
 
   return (
     <div className="min-h-screen bg-gray-50 rtl font-sans">

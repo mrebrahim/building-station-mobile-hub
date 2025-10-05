@@ -26,8 +26,8 @@ const FeaturedCategoriesSection = () => {
   const { data: apiCategories = [], isLoading, error } = useQuery({
     queryKey: ['featured-categories'],
     queryFn: () => categoriesService.getFeaturedCategories(12),
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 30, // 30 seconds
+    gcTime: 1000 * 60 * 10, // 10 minutes
     retry: 3,
     retryDelay: 1000,
   });

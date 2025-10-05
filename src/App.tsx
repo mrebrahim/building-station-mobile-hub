@@ -34,7 +34,7 @@ const RealTimeProvider = ({ children }: { children: React.ReactNode }) => {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1 * 60 * 1000, // 1 minute
+      staleTime: 30 * 1000, // 30 seconds
       gcTime: 10 * 60 * 1000, // 10 minutes
       refetchOnWindowFocus: true,
       refetchOnMount: true,
