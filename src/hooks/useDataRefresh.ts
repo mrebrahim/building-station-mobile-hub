@@ -22,11 +22,7 @@ export const useDataRefresh = () => {
 
   const refreshAllData = async () => {
     try {
-      toast.info("🔄 جاري مزامنة البيانات من WooCommerce...", {
-        duration: 10000,
-      });
-      
-      // Trigger WooCommerce sync
+      // Trigger WooCommerce sync silently
       const syncResult = await triggerWooCommerceSync();
       
       if (!syncResult.success) {
@@ -52,24 +48,10 @@ export const useDataRefresh = () => {
         queryClient.refetchQueries({ queryKey: ['brands'] }),
         queryClient.refetchQueries({ queryKey: ['brands-home'] }),
       ]);
-
-      // Show detailed success message
-      const { categories, products } = syncResult;
-      const message = `✅ تم تحديث البيانات بنجاح!\n📂 الفئات: ${categories.synced}/${categories.total}\n📦 المنتجات: ${products.synced}/${products.total}`;
-      
-      if (syncResult.errors && syncResult.errors.length > 0) {
-        toast.warning(`⚠️ ${message}\n❌ ${syncResult.errors.length} خطأ في المزامنة`, {
-          duration: 8000,
-        });
-      } else {
-        toast.success(message, {
-          duration: 5000,
-        });
-      }
     } catch (error) {
       console.error('Data refresh error:', error);
-      toast.error(`❌ حدث خطأ أثناء مزامنة البيانات: ${error.message}`, {
-        duration: 8000,
+      toast.error(`حدث خطأ أثناء التحديث`, {
+        duration: 3000,
       });
     }
   };

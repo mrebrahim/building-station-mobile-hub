@@ -2,44 +2,7 @@ import { ArrowLeft, Package, Truck, ShoppingCart, MessageCircle } from "lucide-r
 import { Link } from "react-router-dom";
 
 const Notifications = () => {
-  const notifications = [
-    {
-      id: 1,
-      type: "order",
-      title: "تم تأكيد طلبك",
-      message: "تم تأكيد طلب رقم #12345 وسيتم شحنه قريباً",
-      time: "منذ دقيقتين",
-      icon: <Package className="w-5 h-5" />,
-      read: false
-    },
-    {
-      id: 2,
-      type: "shipping",
-      title: "طلبك في الطريق",
-      message: "طلب رقم #12344 خرج للتوصيل وسيصل خلال ساعة",
-      time: "منذ ساعة",
-      icon: <Truck className="w-5 h-5" />,
-      read: false
-    },
-    {
-      id: 3,
-      type: "cart",
-      title: "عناصر في سلة المشتريات",
-      message: "لديك 3 عناصر في سلة المشتريات منتظرة الإتمام",
-      time: "منذ يوم",
-      icon: <ShoppingCart className="w-5 h-5" />,
-      read: true
-    },
-    {
-      id: 4,
-      type: "message",
-      title: "رسالة من خدمة العملاء",
-      message: "تم الرد على استفسارك حول المنتج",
-      time: "منذ يومين",
-      icon: <MessageCircle className="w-5 h-5" />,
-      read: true
-    }
-  ];
+  const notifications = [];
 
   return (
     <div className="min-h-screen bg-gray-50 rtl">

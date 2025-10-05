@@ -28,15 +28,11 @@ const BottomNavigation = () => {
           </span>
         </Link>
         
-        <Link to="/cart" className="flex flex-col items-center py-3 px-4 rounded-lg transition-colors hover:bg-gray-50 min-w-0 flex-1 relative">
+        <Link to="/cart" className="flex flex-col items-center py-3 px-4 rounded-lg transition-colors hover:bg-gray-50 min-w-0 flex-1">
           <ShoppingCart className={`w-6 h-6 ${isActive("/cart") ? "text-primary" : "text-gray-400"}`} />
           <span className={`text-xs mt-1 font-medium ${isActive("/cart") ? "text-primary" : "text-gray-400"}`}>
             السلة
           </span>
-          {/* Cart badge - يمكن إضافة منطق لإظهار عدد العناصر */}
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">3</span>
-          </div>
         </Link>
         
         <Link to="/profile" className="flex flex-col items-center py-3 px-4 rounded-lg transition-colors hover:bg-gray-50 min-w-0 flex-1">
