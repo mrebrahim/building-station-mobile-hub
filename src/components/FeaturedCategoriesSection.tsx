@@ -32,11 +32,6 @@ const FeaturedCategoriesSection = () => {
     retryDelay: 1000,
   });
 
-  // Log the data for debugging
-  console.log('Featured Categories Data:', apiCategories);
-  console.log('Featured Categories Loading:', isLoading);
-  console.log('Featured Categories Error:', error);
-
   // Transform categories to display format
   const displayCategories = apiCategories
     .filter(cat => cat.count > 0) // Only show categories with products
@@ -49,8 +44,6 @@ const FeaturedCategoriesSection = () => {
       image: apiCat.image || undefined,
       parent: apiCat.parent || 0
     }));
-
-  console.log('Display Categories:', displayCategories);
 
   // Group categories into slides of 6 (3x2 grid per slide)
   const categoriesPerSlide = 6;
@@ -136,11 +129,9 @@ const FeaturedCategoriesSection = () => {
                                 alt={category.image.alt || category.name}
                                 loading="lazy"
                                 onError={(e) => {
-                                  console.error("Category image failed to load:", e.currentTarget.src);
                                   e.currentTarget.style.display = 'none';
                                   e.currentTarget.parentElement!.innerHTML = '<span class="text-3xl">📦</span>';
                                 }}
-                                onLoad={() => console.log("Successfully loaded category image:", category.image?.src)}
                                 className="w-full h-full object-cover rounded-xl"
                               />
                             ) : (
