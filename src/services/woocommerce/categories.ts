@@ -93,7 +93,6 @@ export class CategoriesService {
         .from('wc_categories')
         .select('*')
         .not('image_url', 'is', null)
-        .gt('product_count', 0)
         .eq('parent_id', 0) // Only parent categories
         .order('product_count', { ascending: false })
         .limit(limit);
