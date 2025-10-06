@@ -18,14 +18,17 @@ const Cart = () => {
     const updatedCart = cartItems.filter(item => item.id !== id);
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const updateQuantity = (id: number, quantity: number) => {
-    const updatedCart = cartItems.map(item => 
+    if (quantity < 1) return;
+    const updatedCart = cartItems.map(item =>
       item.id === id ? { ...item, quantity } : item
     );
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

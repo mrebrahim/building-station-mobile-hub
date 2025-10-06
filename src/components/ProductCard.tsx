@@ -46,6 +46,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
     
     localStorage.setItem('cart', JSON.stringify(existingCart));
+    window.dispatchEvent(new Event('cartUpdated'));
     
     toast({
       title: "تم إضافة المنتج",

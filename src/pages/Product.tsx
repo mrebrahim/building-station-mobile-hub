@@ -142,6 +142,9 @@ const Product = () => {
     
     localStorage.setItem('cart', JSON.stringify(existingCart));
     
+    // Dispatch custom event to update cart count
+    window.dispatchEvent(new Event('cartUpdated'));
+    
     toast({
       title: "تم إضافة المنتج",
       description: `تم إضافة ${product.name} إلى السلة`,

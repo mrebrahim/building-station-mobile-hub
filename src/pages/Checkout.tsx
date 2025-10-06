@@ -112,6 +112,7 @@ const Checkout = () => {
         
         // Clear cart
         localStorage.removeItem('cart');
+        window.dispatchEvent(new Event('cartUpdated'));
         
         // Redirect to success page or order confirmation
         setTimeout(() => {
