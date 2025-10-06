@@ -1,5 +1,7 @@
-
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface OrderItem {
   id: number;
@@ -13,9 +15,49 @@ interface OrderSummaryDetailProps {
   items: OrderItem[];
   subtotal: number;
   total: number;
+  discount: number;
+  onDiscountApply: (discount: number, code: string) => void;
 }
 
-const OrderSummaryDetail = ({ items, subtotal, total }: OrderSummaryDetailProps) => {
+const OrderSummaryDetail = ({ items, subtotal, total, discount, onDiscountApply }: OrderSummaryDetailProps) => {
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+
+  // أكواد الخصم المتاحة (يمكن إضافة المزيد)
+  const availableCoupons: { [key: string]: number } = {
+    "SAVE10": 10, // خصم 10%
+    "SAVE20": 20, // خصم 20%
+    "WELCOME": 15, // خصم 15%
+  };
+
+  const handleApplyCoupon = () => {
+    const code = couponCode.trim().toUpperCase();
+    
+    if (!code) {
+      toast.error("الرجاء إدخال كود الخصم");
+      return;
+    }
+
+    if (availableCoupons[code]) {
+      const discountPercent = availableCoupons[code];
+      const discountAmount = (subtotal * discountPercent) / 100;
+      
+      setAppliedCoupon(code);
+      onDiscountApply(discountAmount, code);
+      
+      toast.success(`تم تطبيق خصم ${discountPercent}%`);
+    } else {
+      toast.error("كود الخصم غير صحيح");
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode("");
+    setAppliedCoupon("");
+    onDiscountApply(0, "");
+    toast.success("تم إلغاء كود الخصم");
+  };
+
   return (
     <div className="mb-6">
       <h2 className="text-lg font-medium mb-4">ملخص الطلب</h2>
@@ -53,9 +95,40 @@ const OrderSummaryDetail = ({ items, subtotal, total }: OrderSummaryDetailProps)
       ))}
 
       <div className="space-y-3 border-t pt-4">
-        <div className="flex justify-between">
-          <span>كود خصم أو بطاقة هدية</span>
-          <Button variant="outline" size="sm">تفعيل</Button>
+        <div className="space-y-2">
+          <span className="text-sm font-medium">كود خصم أو بطاقة هدية</span>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="أدخل كود الخصم"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              disabled={!!appliedCoupon}
+              className="flex-1"
+            />
+            {appliedCoupon ? (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleRemoveCoupon}
+              >
+                إلغاء
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleApplyCoupon}
+              >
+                تفعيل
+              </Button>
+            )}
+          </div>
+          {appliedCoupon && (
+            <p className="text-sm text-green-600">
+              ✓ تم تطبيق كود: {appliedCoupon}
+            </p>
+          )}
         </div>
         
         <div className="flex justify-between text-lg font-medium">
@@ -65,8 +138,15 @@ const OrderSummaryDetail = ({ items, subtotal, total }: OrderSummaryDetailProps)
         
         <div className="flex justify-between items-center">
           <span>شحن</span>
-          <span className="text-sm text-gray-500">أدخل عنوان الشحن</span>
+          <span className="text-sm text-gray-500">مجاناً</span>
         </div>
+
+        {discount > 0 && (
+          <div className="flex justify-between text-green-600">
+            <span>الخصم</span>
+            <span>- د.ع {discount.toLocaleString()}</span>
+          </div>
+        )}
         
         <div className="flex justify-between text-xl font-bold border-t pt-3">
           <span>المجموع</span>

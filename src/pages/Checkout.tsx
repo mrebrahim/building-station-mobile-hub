@@ -28,6 +28,8 @@ const Checkout = () => {
     items: [] as any[],
     subtotal: 0,
     shipping: 0,
+    discount: 0,
+    appliedCoupon: "",
     total: 0
   });
 
@@ -40,12 +42,24 @@ const Checkout = () => {
       items: savedCart,
       subtotal: subtotal,
       shipping: 0,
+      discount: 0,
+      appliedCoupon: "",
       total: subtotal
     });
   }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDiscountApply = (discountAmount: number, couponCode: string) => {
+    const newTotal = orderSummary.subtotal - discountAmount;
+    setOrderSummary(prev => ({
+      ...prev,
+      discount: discountAmount,
+      appliedCoupon: couponCode,
+      total: newTotal
+    }));
   };
 
   const handleSubmit = async () => {
@@ -143,10 +157,12 @@ const Checkout = () => {
           onInputChange={handleInputChange}
         />
 
-        <OrderSummaryDetail
+        <OrderSummaryDetail 
           items={orderSummary.items}
           subtotal={orderSummary.subtotal}
           total={orderSummary.total}
+          discount={orderSummary.discount}
+          onDiscountApply={handleDiscountApply}
         />
 
         <CheckoutFooter onSubmit={handleSubmit} isSubmitting={isSubmitting} />
