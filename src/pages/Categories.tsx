@@ -54,12 +54,12 @@ const Categories = () => {
     <div className="min-h-screen bg-gray-50 rtl">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex items-center justify-between p-4">
-          <div className="w-12"></div>
-          <h1 className="text-xl font-bold text-gray-800">جميع الفئات</h1>
+        <div className="flex items-center justify-between p-3">
+          <div className="w-10"></div>
+          <h1 className="text-lg font-bold text-gray-800">جميع الفئات</h1>
           <Link to="/">
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
-              <ArrowRight className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full hover:bg-gray-100">
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>
@@ -69,38 +69,38 @@ const Categories = () => {
       <CategoryBreadcrumb items={breadcrumbItems} />
 
       {/* Search and Filter Section */}
-      <div className="px-4 py-4 bg-white border-b border-gray-100">
-        <div className="flex gap-3 items-center">
+      <div className="px-3 py-3 bg-white border-b border-gray-100">
+        <div className="flex gap-2 items-center">
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               type="text"
               placeholder="البحث في الفئات..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              className="pr-9 text-sm h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <Button variant="outline" size="icon" className="border-gray-200 hover:bg-gray-50">
+          <Button variant="outline" size="icon" className="w-9 h-9 border-gray-200 hover:bg-gray-50">
             <Filter className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {/* Categories Content */}
-      <div className="px-4 py-6">
+      <div className="px-3 py-4 pb-20">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
             {Array.from({ length: 18 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-3 text-center shadow-sm animate-pulse border border-gray-100">
-                <div className="w-14 h-14 bg-gray-200 rounded-xl mx-auto mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded mb-1"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3 mx-auto"></div>
+              <div key={i} className="bg-white rounded-xl p-2.5 text-center shadow-sm animate-pulse border border-gray-100">
+                <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-1.5"></div>
+                <div className="h-2.5 bg-gray-200 rounded mb-1"></div>
+                <div className="h-2 bg-gray-200 rounded w-2/3 mx-auto"></div>
               </div>
             ))}
           </div>
         ) : displayCategories.length > 0 ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
             {displayCategories.map((category) => (
               <EnhancedCategoryCard 
                 key={category.id} 

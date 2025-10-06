@@ -23,29 +23,28 @@ const EnhancedCategoryCard = ({ category }: EnhancedCategoryCardProps) => {
 
   return (
     <Link to={linkTo} className="block">
-      <div className="bg-white rounded-2xl p-3 text-center shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer hover:bg-gray-50">
-        <div className="w-14 h-14 bg-gray-50 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden">
+      <div className="bg-white rounded-xl p-2.5 text-center shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 cursor-pointer hover:bg-gray-50">
+        <div className="w-12 h-12 bg-gray-50 rounded-lg mx-auto mb-1.5 flex items-center justify-center overflow-hidden">
           {category.image && category.image.src ? (
             <img 
               src={category.image.src} 
               alt={category.image.alt || category.name}
               loading="lazy"
               onError={(e) => {
-                console.error("Category image failed to load:", e.currentTarget.src);
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<span class="text-xl">📦</span>';
+                e.currentTarget.parentElement!.innerHTML = '<span class="text-lg">📦</span>';
               }}
               className="w-full h-full object-contain"
             />
           ) : (
-            <span className="text-xl">📦</span>
+            <span className="text-lg">📦</span>
           )}
         </div>
         
-        <h4 className="text-xs font-semibold text-gray-800 leading-tight mb-1">
+        <h4 className="text-[11px] font-semibold text-gray-800 leading-tight mb-0.5 line-clamp-2">
           {category.name}
         </h4>
-        <p className="text-xs text-gray-400">{category.count} منتج</p>
+        <p className="text-[10px] text-gray-400">{category.count} منتج</p>
       </div>
     </Link>
   );
