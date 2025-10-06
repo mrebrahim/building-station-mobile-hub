@@ -13,7 +13,6 @@ const Product = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showFullDescription, setShowFullDescription] = useState(false);
 
   // Fetch product data from WooCommerce
   const { data: product, isLoading: productLoading, error } = useQuery({
@@ -250,28 +249,15 @@ const Product = () => {
             />
           )}
           
-          {product.description && !showFullDescription && (
-            <button 
-              onClick={() => setShowFullDescription(true)}
-              className="text-blue-500 text-sm mt-2 hover:text-blue-600 transition-colors"
-            >
-              اقرأ المزيد
-            </button>
+          {product.description && (
+            <button className="text-blue-500 text-sm mt-2">اقرأ المزيد</button>
           )}
         </div>
 
         {/* Full Description */}
-        {product.description && showFullDescription && (
+        {product.description && (
           <div className="bg-white p-4 mb-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">الوصف التفصيلي</h3>
-              <button 
-                onClick={() => setShowFullDescription(false)}
-                className="text-blue-500 text-sm hover:text-blue-600 transition-colors"
-              >
-                إخفاء
-              </button>
-            </div>
+            <h3 className="text-lg font-bold mb-4">الوصف التفصيلي</h3>
             <div 
               className="text-gray-600 text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ __html: product.description }}

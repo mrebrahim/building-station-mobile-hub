@@ -139,11 +139,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
       {/* Add to Cart Button */}
       <button
         onClick={() => handleAddToCart(product)}
-        className="absolute bottom-2.5 right-2.5 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        className="absolute bottom-2.5 right-2.5 w-9 h-9 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={product.stock_status !== 'instock'}
-        aria-label="إضافة إلى السلة"
       >
-        <Plus className="w-5 h-5" />
+        <Plus className="w-4 h-4" />
       </button>
     </div>
   );
