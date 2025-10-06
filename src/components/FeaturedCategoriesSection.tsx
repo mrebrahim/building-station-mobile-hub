@@ -32,6 +32,16 @@ const FeaturedCategoriesSection = () => {
     retryDelay: 1000,
   });
 
+  // Log categories data for debugging
+  useEffect(() => {
+    console.log('Featured Categories Data:', { 
+      total: apiCategories.length, 
+      categories: apiCategories,
+      isLoading,
+      error: error?.message 
+    });
+  }, [apiCategories, isLoading, error]);
+
   // Transform categories to display format
   const displayCategories = apiCategories
     .filter(cat => cat.count > 0) // Only show categories with products
