@@ -188,7 +188,7 @@ const Product = () => {
         </div>
       </header>
 
-      <div className="pb-44">
+      <div className="pb-20">
         {/* Image Carousel */}
         <div className="relative bg-white">
           <div className="relative h-80 overflow-hidden">
@@ -246,6 +246,47 @@ const Product = () => {
             <span className="text-2xl font-bold">
               {productPrice > 0 ? `IQD ${productPrice.toLocaleString()}` : 'اتصل للسعر'}
             </span>
+          </div>
+
+          {/* Quantity Controls and Add to Cart */}
+          <div className="flex items-center gap-3 mb-4">
+            {/* Quantity Controls */}
+            <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(-1)}
+                disabled={quantity <= 1}
+                className="h-8 w-8 rounded-lg hover:bg-white"
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="text-base font-bold px-2 min-w-[2rem] text-center">{quantity}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(1)}
+                className="h-8 w-8 rounded-lg hover:bg-white"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Add to Cart Button */}
+            <Button 
+              className="flex-1 bg-black hover:bg-gray-800 text-white h-12 text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+              onClick={handleAddToCart}
+              disabled={product.stock_status !== 'instock'}
+            >
+              <div className="flex items-center justify-between w-full">
+                <span>
+                  {product.stock_status === 'instock' ? 'إضافة للسلة' : 'غير متوفر'}
+                </span>
+                <span>
+                  {productPrice > 0 ? `${(productPrice * quantity).toLocaleString()} IQD` : 'السعر'}
+                </span>
+              </div>
+            </Button>
           </div>
           
           {product.short_description && (
@@ -319,48 +360,6 @@ const Product = () => {
         )}
       </div>
 
-      {/* Bottom Add to Cart Section - Simple single row design */}
-      <div className="fixed bottom-8 left-4 right-4 bg-white border-2 border-gray-200 rounded-2xl p-3 shadow-lg z-50">
-        <div className="flex items-center justify-between gap-3">
-          {/* Quantity Controls */}
-          <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleQuantityChange(-1)}
-              disabled={quantity <= 1}
-              className="h-8 w-8 rounded-lg hover:bg-white"
-            >
-              <Minus className="w-4 h-4" />
-            </Button>
-            <span className="text-base font-bold px-2 min-w-[2rem] text-center">{quantity}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleQuantityChange(1)}
-              className="h-8 w-8 rounded-lg hover:bg-white"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          {/* Add to Cart Button */}
-          <Button 
-            className="flex-1 bg-black hover:bg-gray-800 text-white h-12 text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
-            onClick={handleAddToCart}
-            disabled={product.stock_status !== 'instock'}
-          >
-            <div className="flex items-center justify-between w-full">
-              <span>
-                {product.stock_status === 'instock' ? 'إضافة للسلة' : 'غير متوفر'}
-              </span>
-              <span>
-                {productPrice > 0 ? `${(productPrice * quantity).toLocaleString()} IQD` : 'السعر'}
-              </span>
-            </div>
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };
