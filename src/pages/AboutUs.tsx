@@ -75,7 +75,7 @@ const AboutUs = () => {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">📱</span>
-              <span className="text-gray-700" dir="ltr">+964 XXX XXX XXXX</span>
+              <a href="tel:+9647709257125" className="text-gray-700 hover:text-primary" dir="ltr">+964 770 925 7125</a>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">📍</span>
