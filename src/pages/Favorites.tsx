@@ -25,6 +25,7 @@ const Favorites = () => {
     const updatedFavorites = favoriteProducts.filter(product => product.id !== productId);
     setFavoriteProducts(updatedFavorites);
     localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    window.dispatchEvent(new Event('favoritesUpdated'));
     
     toast({
       title: "تم الحذف",

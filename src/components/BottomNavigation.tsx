@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 const BottomNavigation = () => {
   const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
+  const [favoritesCount, setFavoritesCount] = useState(0);
   
   useEffect(() => {
     const updateCartCount = () => {
@@ -14,16 +15,31 @@ const BottomNavigation = () => {
       setCartCount(totalItems);
     };
     
+    const updateFavoritesCount = () => {
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      setFavoritesCount(favorites.length);
+    };
+    
     updateCartCount();
+    updateFavoritesCount();
     
     // Listen for storage changes
-    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('storage', () => {
+      updateCartCount();
+      updateFavoritesCount();
+    });
     // Listen for custom cart update event
     window.addEventListener('cartUpdated', updateCartCount);
+    // Listen for custom favorites update event
+    window.addEventListener('favoritesUpdated', updateFavoritesCount);
     
     return () => {
-      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('storage', () => {
+        updateCartCount();
+        updateFavoritesCount();
+      });
       window.removeEventListener('cartUpdated', updateCartCount);
+      window.removeEventListener('favoritesUpdated', updateFavoritesCount);
     };
   }, [location]);
   
@@ -43,8 +59,15 @@ const BottomNavigation = () => {
           </span>
         </Link>
         
-        <Link to="/favorites" className="flex flex-col items-center py-3 px-4 rounded-lg transition-colors hover:bg-gray-50 min-w-0 flex-1">
-          <Heart className={`w-6 h-6 ${isActive("/favorites") ? "text-primary" : "text-gray-400"}`} />
+        <Link to="/favorites" className="flex flex-col items-center py-3 px-4 rounded-lg transition-colors hover:bg-gray-50 min-w-0 flex-1 relative">
+          <div className="relative">
+            <Heart className={`w-6 h-6 ${isActive("/favorites") ? "text-primary" : "text-gray-400"}`} />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {favoritesCount > 99 ? '99+' : favoritesCount}
+              </span>
+            )}
+          </div>
           <span className={`text-xs mt-1 font-medium ${isActive("/favorites") ? "text-primary" : "text-gray-400"}`}>
             المفضلة
           </span>

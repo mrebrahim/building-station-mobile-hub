@@ -62,6 +62,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       const updatedFavorites = favorites.filter((fav: any) => fav.id !== product.id);
       localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
       setIsFavorite(false);
+      window.dispatchEvent(new Event('favoritesUpdated'));
       toast({
         title: "تم الحذف",
         description: `تم حذف ${product.name} من المفضلة`,
@@ -78,6 +79,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       favorites.push(favoriteProduct);
       localStorage.setItem('favorites', JSON.stringify(favorites));
       setIsFavorite(true);
+      window.dispatchEvent(new Event('favoritesUpdated'));
       toast({
         title: "تم الإضافة",
         description: `تم إضافة ${product.name} إلى المفضلة`,
