@@ -1,9 +1,8 @@
 
-import { Heart, Plus, Minus } from "lucide-react";
+import { Heart, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 
 interface Product {
   id: number;
@@ -21,7 +20,6 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [quantity, setQuantity] = useState(1);
 
   // Check if product is in favorites when component mounts
   useEffect(() => {
@@ -35,14 +33,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
     const existingItemIndex = existingCart.findIndex((item: any) => item.id === product.id);
     
     if (existingItemIndex >= 0) {
-      existingCart[existingItemIndex].quantity += quantity;
+      existingCart[existingItemIndex].quantity += 1;
     } else {
       existingCart.push({
         id: product.id,
         name: product.name,
         brand: product.categories?.[0]?.name || 'غير محدد',
         price: parseFloat(product.price) || 0,
-        quantity: quantity,
+        quantity: 1,
         image: product.images?.[0]?.src || ''
       });
     }
@@ -51,11 +49,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
     
     toast({
       title: "تم إضافة المنتج",
-      description: `تم إضافة ${quantity} من ${product.name} إلى السلة`,
+      description: `تم إضافة ${product.name} إلى السلة`,
     });
-    
-    // Reset quantity after adding to cart
-    setQuantity(1);
   };
 
   const toggleFavorite = () => {
@@ -137,53 +132,22 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
       
       {/* Price */}
-      <p className="text-sm font-bold text-black mb-2">
+      <p className="text-sm font-bold text-black mb-8">
         {product.price ? `${parseInt(product.price).toLocaleString()} IQD` : 'اتصل للسعر'}
       </p>
       
-      {/* Quantity Selector */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg p-0.5 border border-gray-200">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              setQuantity(Math.max(1, quantity - 1));
-            }}
-            disabled={quantity <= 1}
-            className="h-6 w-6 p-0 hover:bg-white rounded-md"
-          >
-            <Minus className="w-3 h-3" />
-          </Button>
-          <span className="text-xs font-bold px-2 min-w-[1.5rem] text-center">{quantity}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              setQuantity(quantity + 1);
-            }}
-            className="h-6 w-6 p-0 hover:bg-white rounded-md"
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
-        </div>
-        
-        {/* Add to Cart Button */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            handleAddToCart(product);
-          }}
-          className="flex-1 mr-2 h-8 bg-black text-white rounded-lg flex items-center justify-center gap-1 hover:bg-gray-800 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
-          disabled={product.stock_status !== 'instock'}
-          aria-label="إضافة إلى السلة"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          إضافة للسلة
-        </button>
-      </div>
+      {/* Add to Cart Button */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          handleAddToCart(product);
+        }}
+        className="absolute bottom-2.5 right-2.5 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={product.stock_status !== 'instock'}
+        aria-label="إضافة إلى السلة"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
     </div>
   );
 };
