@@ -314,47 +314,47 @@ const Product = () => {
         )}
       </div>
 
-      {/* Bottom Add to Cart Section - Fixed with safe area */}
-      <div className="fixed bottom-4 left-4 right-4 bg-white border-2 border-gray-300 rounded-2xl p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-50 max-w-screen-sm mx-auto">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
+      {/* Bottom Add to Cart Section - Simple single row design */}
+      <div className="fixed bottom-4 left-4 right-4 bg-white border-2 border-gray-200 rounded-2xl p-3 shadow-lg z-50">
+        <div className="flex items-center justify-between gap-3">
+          {/* Quantity Controls */}
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => handleQuantityChange(-1)}
               disabled={quantity <= 1}
-              className="h-10 w-10 rounded-full border-2 border-gray-300 hover:border-black hover:bg-gray-50"
+              className="h-8 w-8 rounded-lg hover:bg-white"
             >
-              <Minus className="w-5 h-5" />
+              <Minus className="w-4 h-4" />
             </Button>
-            <span className="text-xl font-bold px-4 min-w-[3rem] text-center">{quantity}</span>
+            <span className="text-base font-bold px-2 min-w-[2rem] text-center">{quantity}</span>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => handleQuantityChange(1)}
-              className="h-10 w-10 rounded-full border-2 border-gray-300 hover:border-black hover:bg-gray-50"
+              className="h-8 w-8 rounded-lg hover:bg-white"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <span className="text-base font-semibold text-gray-700">الكمية</span>
+          
+          {/* Add to Cart Button */}
+          <Button 
+            className="flex-1 bg-black hover:bg-gray-800 text-white h-12 text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+            onClick={handleAddToCart}
+            disabled={product.stock_status !== 'instock'}
+          >
+            <div className="flex items-center justify-between w-full">
+              <span>
+                {product.stock_status === 'instock' ? 'إضافة للسلة' : 'غير متوفر'}
+              </span>
+              <span>
+                {productPrice > 0 ? `${(productPrice * quantity).toLocaleString()} IQD` : 'السعر'}
+              </span>
+            </div>
+          </Button>
         </div>
-        
-        <Button 
-          className="w-full bg-black hover:bg-gray-800 text-white py-4 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleAddToCart}
-          disabled={product.stock_status !== 'instock'}
-        >
-          <div className="flex items-center justify-between w-full px-2">
-            <span className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              {product.stock_status === 'instock' ? 'إضافة إلى السلة' : 'غير متوفر'}
-            </span>
-            <span className="font-bold">
-              {productPrice > 0 ? `${(productPrice * quantity).toLocaleString()} IQD` : 'اتصل للسعر'}
-            </span>
-          </div>
-        </Button>
       </div>
     </div>
   );
