@@ -6,8 +6,6 @@ import CheckoutHeader from "@/components/checkout/CheckoutHeader";
 import OrderSummaryCard from "@/components/checkout/OrderSummaryCard";
 import ContactInformation from "@/components/checkout/ContactInformation";
 import DeliveryInformation from "@/components/checkout/DeliveryInformation";
-import ShippingMethod from "@/components/checkout/ShippingMethod";
-import PaymentMethod from "@/components/checkout/PaymentMethod";
 import OrderSummaryDetail from "@/components/checkout/OrderSummaryDetail";
 import CheckoutFooter from "@/components/checkout/CheckoutFooter";
 import { wooCommerceService } from "@/services/woocommerce/index";
@@ -23,9 +21,7 @@ const Checkout = () => {
     street: "",
     city: "",
     postalCode: "",
-    phone: "",
-    paymentMethod: "credit",
-    codPayment: false
+    phone: ""
   });
 
   const [orderSummary, setOrderSummary] = useState({
@@ -71,8 +67,8 @@ const Checkout = () => {
     try {
       // Prepare order data for WooCommerce
       const orderData = {
-        payment_method: formData.codPayment ? "cod" : "bacs",
-        payment_method_title: formData.codPayment ? "الدفع عند الاستلام" : "تحويل بنكي",
+        payment_method: "cod",
+        payment_method_title: "الدفع عند الاستلام",
         set_paid: false,
         billing: {
           first_name: formData.firstName,
@@ -147,14 +143,7 @@ const Checkout = () => {
           onInputChange={handleInputChange}
         />
 
-        <ShippingMethod />
-
-        <PaymentMethod 
-          codPayment={formData.codPayment}
-          onCodPaymentChange={(value) => handleInputChange("codPayment", value)}
-        />
-
-        <OrderSummaryDetail 
+        <OrderSummaryDetail
           items={orderSummary.items}
           subtotal={orderSummary.subtotal}
           total={orderSummary.total}
