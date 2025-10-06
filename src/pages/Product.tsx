@@ -315,40 +315,43 @@ const Product = () => {
       </div>
 
       {/* Bottom Add to Cart Section */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleQuantityChange(-1)}
               disabled={quantity <= 1}
+              className="h-10 w-10 rounded-full border-2 border-gray-300 hover:border-black hover:bg-gray-50"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-5 h-5" />
             </Button>
-            <span className="text-lg font-medium px-3">{quantity}</span>
+            <span className="text-xl font-bold px-4 min-w-[3rem] text-center">{quantity}</span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleQuantityChange(1)}
+              className="h-10 w-10 rounded-full border-2 border-gray-300 hover:border-black hover:bg-gray-50"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
             </Button>
           </div>
-          <span className="text-sm text-gray-500">العدد</span>
+          <span className="text-base font-semibold text-gray-700">الكمية</span>
         </div>
         
         <Button 
-          className="w-full bg-black text-white py-3 text-lg font-medium"
+          className="w-full bg-black hover:bg-gray-800 text-white py-4 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleAddToCart}
           disabled={product.stock_status !== 'instock'}
         >
-          <div className="flex items-center justify-between w-full">
-            <span>
-              {product.stock_status === 'instock' ? 'إضافة المنتج' : 'غير متوفر'}
+          <div className="flex items-center justify-between w-full px-2">
+            <span className="flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              {product.stock_status === 'instock' ? 'إضافة إلى السلة' : 'غير متوفر'}
             </span>
-            <span>
-              {productPrice > 0 ? `IQD ${(productPrice * quantity).toLocaleString()}` : 'اتصل للسعر'}
+            <span className="font-bold">
+              {productPrice > 0 ? `${(productPrice * quantity).toLocaleString()} IQD` : 'اتصل للسعر'}
             </span>
           </div>
         </Button>
