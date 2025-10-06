@@ -14,6 +14,8 @@ const Categories = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedParent, setSelectedParent] = useState<number | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'count'>('name');
 
   // Fetch all categories from WooCommerce API
   const { data: apiCategories = [], isLoading, error } = useQuery({
@@ -39,7 +41,14 @@ const Categories = () => {
       count: apiCat.count,
       image: apiCat.image || undefined,
       parent: apiCat.parent || 0
-    }));
+    }))
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name, 'ar');
+      } else {
+        return b.count - a.count;
+      }
+    });
 
 
   const breadcrumbItems = [
@@ -81,10 +90,40 @@ const Categories = () => {
               className="pr-9 text-sm h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <Button variant="outline" size="icon" className="w-9 h-9 border-gray-200 hover:bg-gray-50">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="w-9 h-9 border-gray-200 hover:bg-gray-50"
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+          >
             <Filter className="w-4 h-4" />
           </Button>
         </div>
+        
+        {/* Filter Menu */}
+        {showFilterMenu && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs font-medium text-gray-700 mb-2">ترتيب حسب:</p>
+            <div className="flex gap-2">
+              <Button
+                variant={sortBy === 'name' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 text-xs h-8"
+                onClick={() => setSortBy('name')}
+              >
+                الاسم
+              </Button>
+              <Button
+                variant={sortBy === 'count' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 text-xs h-8"
+                onClick={() => setSortBy('count')}
+              >
+                عدد المنتجات
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Categories Content */}

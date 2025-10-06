@@ -25,6 +25,7 @@ import Favorites from "./pages/Favorites";
 import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
 import SyncDashboard from "./pages/SyncDashboard";
+import AboutUs from "./pages/AboutUs";
 import BottomNavigation from "./components/BottomNavigation";
 
 // Component to handle real-time updates
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="/purchase-request" element={<PurchaseRequest />} />
             <Route path="/become-supplier" element={<BecomeSupplier />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/about-us" element={<AboutUs />} />
             <Route path="/sync-dashboard" element={<SyncDashboard />} />
             <Route path="/no-internet" element={<NoInternet />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
