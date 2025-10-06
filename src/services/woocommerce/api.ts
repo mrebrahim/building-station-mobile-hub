@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export class WooCommerceAPI {
-  async makeRequest(endpoint: string, options: RequestInit = {}) {
+  async makeRequest(endpoint: string, options: { method?: string; body?: any } = {}) {
     console.log('Making WooCommerce API request via Edge Function to endpoint:', endpoint);
     console.log('Request options:', options);
     
@@ -10,13 +10,23 @@ export class WooCommerceAPI {
       // Extract search params from endpoint if they exist
       const [path, searchParams] = endpoint.split('?');
       
+      // Parse body if it's a string (shouldn't be stringified twice)
+      let bodyData = options.body;
+      if (typeof bodyData === 'string') {
+        try {
+          bodyData = JSON.parse(bodyData);
+        } catch (e) {
+          console.warn('Body is a string but not valid JSON, sending as-is');
+        }
+      }
+      
       // Use Supabase Edge Function as proxy
       const { data, error } = await supabase.functions.invoke('woocommerce-proxy', {
         body: {
           endpoint: path,
           params: searchParams || '',
           method: options.method || 'GET',
-          body: options.body
+          body: bodyData
         }
       });
 

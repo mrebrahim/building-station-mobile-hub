@@ -6,7 +6,7 @@ export class OrdersService {
   async createOrder(orderData: Order) {
     return apiClient.makeRequest('/orders', {
       method: 'POST',
-      body: JSON.stringify(orderData),
+      body: orderData,
     });
   }
 }
