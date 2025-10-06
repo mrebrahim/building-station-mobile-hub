@@ -168,12 +168,17 @@ const Product = () => {
             />
           </div>
           
-          <div className="flex items-center gap-4">
-            <Link to="/cart" className="bg-black text-white px-3 py-1 rounded-full text-sm">
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={handleAddToCart}
+              disabled={product.stock_status !== 'instock'}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md"
+            >
+              <Plus className="w-4 h-4 ml-1" />
+              إضافة للسلة
+            </Button>
+            <Link to="/cart" className="bg-black text-white px-4 py-2 rounded-full text-sm font-medium">
               عرض السلة
-            </Link>
-            <Link to="/favorites" className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">
-              عرض المفضلة
             </Link>
           </div>
           
