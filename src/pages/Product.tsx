@@ -183,7 +183,7 @@ const Product = () => {
         </div>
       </header>
 
-      <div className="pb-32">
+      <div className="pb-44">
         {/* Image Carousel */}
         <div className="relative bg-white">
           <div className="relative h-80 overflow-hidden">
@@ -314,8 +314,8 @@ const Product = () => {
         )}
       </div>
 
-      {/* Bottom Add to Cart Section */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 p-4 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+      {/* Bottom Add to Cart Section - Fixed with safe area */}
+      <div className="fixed bottom-4 left-4 right-4 bg-white border-2 border-gray-300 rounded-2xl p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-50 max-w-screen-sm mx-auto">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Button
