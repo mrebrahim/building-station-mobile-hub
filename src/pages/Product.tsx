@@ -320,7 +320,7 @@ const Product = () => {
       </div>
 
       {/* Bottom Add to Cart Section - Simple single row design */}
-      <div className="fixed bottom-4 left-4 right-4 bg-white border-2 border-gray-200 rounded-2xl p-3 shadow-lg z-50">
+      <div className="fixed bottom-8 left-4 right-4 bg-white border-2 border-gray-200 rounded-2xl p-3 shadow-lg z-50">
         <div className="flex items-center justify-between gap-3">
           {/* Quantity Controls */}
           <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
