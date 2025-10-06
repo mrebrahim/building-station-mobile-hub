@@ -141,8 +141,8 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
 
   if (isLoading) {
     return (
-      <div className="px-4 mb-6">
-        <h3 className="text-lg font-bold mb-4 text-right text-gray-800">{title}</h3>
+      <div className="px-3 mb-6">
+        <h3 className="text-lg font-bold mb-3.5 text-right text-gray-900">{title}</h3>
         <ProductSkeletonGrid count={12} />
       </div>
     );
@@ -150,11 +150,12 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
 
   if (error && products.length === 0) {
     return (
-      <div className="px-4 mb-6">
-        <h3 className="text-lg font-bold mb-4 text-right text-gray-800">{title}</h3>
-        <div className="text-center py-12">
-          <p className="text-red-600 mb-4">حدث خطأ في تحميل المنتجات</p>
-          <p className="text-gray-600 mb-6">{error}</p>
+      <div className="px-3 mb-6">
+        <h3 className="text-lg font-bold mb-3.5 text-right text-gray-900">{title}</h3>
+        <div className="text-center py-10 px-4">
+          <div className="text-5xl mb-3">⚠️</div>
+          <p className="text-red-600 font-medium mb-2">حدث خطأ في تحميل المنتجات</p>
+          <p className="text-gray-600 mb-4 text-sm">{error}</p>
           <Button 
             onClick={retry}
             variant="outline"
@@ -169,12 +170,12 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
   }
 
   return (
-    <div className="px-4 mb-6">
-      <h3 className="text-lg font-bold mb-4 text-right text-gray-800">{title}</h3>
+    <div className="px-3 mb-6">
+      <h3 className="text-lg font-bold mb-3.5 text-right text-gray-900">{title}</h3>
       
       {products.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {products.map((product, index) => (
               <div
                 key={product.id}
@@ -188,18 +189,18 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
 
           {/* Loading more indicator */}
           {isLoadingMore && (
-            <div className="mt-8">
+            <div className="mt-4">
               <ProductSkeletonGrid count={4} />
             </div>
           )}
 
           {/* Load More Button - shows after 30 products */}
           {shouldShowLoadMoreButton && hasMore && !isLoadingMore && (
-            <div className="text-center mt-8">
+            <div className="text-center mt-5">
               <Button
                 onClick={loadMore}
                 variant="outline"
-                className="text-primary border-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 text-lg font-medium"
+                className="text-primary border-primary hover:bg-primary hover:text-primary-foreground px-8 py-2.5 text-base font-medium rounded-xl active:scale-95 transition-all"
               >
                 عرض المزيد من المنتجات
               </Button>
@@ -210,16 +211,16 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
           {hasMore && !isLoadingMore && !shouldShowLoadMoreButton && (
             <div
               ref={setSentinelRef}
-              className="flex items-center justify-center py-8"
+              className="flex items-center justify-center py-6"
             >
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
             </div>
           )}
 
           {/* End of products message */}
           {!hasMore && products.length > 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-600">تم عرض جميع المنتجات المتاحة</p>
+              <p className="text-gray-700 font-medium">تم عرض جميع المنتجات المتاحة</p>
               <p className="text-sm text-gray-500 mt-2">
                 إجمالي {products.length} منتج
               </p>
@@ -227,8 +228,9 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
           )}
         </>
       ) : (
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">لا توجد منتجات متاحة حالياً</p>
+        <div className="text-center py-10 px-4">
+          <div className="text-5xl mb-3">📦</div>
+          <p className="text-gray-700 font-medium mb-2">لا توجد منتجات متاحة حالياً</p>
           <p className="text-sm text-gray-500">يرجى المحاولة لاحقاً أو التحقق من الاتصال بالإنترنت</p>
         </div>
       )}

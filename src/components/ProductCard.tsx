@@ -85,63 +85,64 @@ const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative">
+    <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 relative hover:shadow-md transition-shadow duration-200">
       {/* Heart Icon */}
-      <button onClick={toggleFavorite}>
-        <Heart className={`absolute top-3 left-3 w-5 h-5 cursor-pointer z-10 ${
-          isFavorite ? 'text-red-500 fill-current' : 'text-gray-300 hover:text-red-500'
+      <button onClick={toggleFavorite} className="absolute top-2 left-2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-colors">
+        <Heart className={`w-4 h-4 ${
+          isFavorite ? 'text-red-500 fill-current' : 'text-gray-400 hover:text-red-500'
         }`} />
       </button>
       
       {/* Product Image */}
       <Link to={`/product/${product.id}`}>
-        <div className="w-full h-40 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+        <div className="w-full aspect-square bg-gray-50 rounded-xl mb-2.5 flex items-center justify-center overflow-hidden relative">
           {product.images && product.images.length > 0 && product.images[0].src ? (
             <img
               src={product.images[0].src}
               alt={product.images[0].alt || product.name}
               loading="lazy"
               onError={(e) => {
-                console.error("Product image failed to load:", e.currentTarget.src);
-                // Show a product box emoji as fallback instead of another image
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<span class="text-4xl text-gray-400">📦</span>';
+                const fallback = document.createElement('div');
+                fallback.className = 'w-full h-full flex items-center justify-center text-4xl text-gray-300';
+                fallback.innerHTML = '📦';
+                e.currentTarget.parentElement?.appendChild(fallback);
               }}
-              onLoad={() => console.log("Successfully loaded product image:", product.images?.[0]?.src)}
-              className="w-full h-full object-contain hover:scale-105 transition-transform duration-200"
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <span className="text-4xl text-gray-400">📦</span>
+            <span className="text-4xl text-gray-300">📦</span>
           )}
         </div>
       </Link>
       
       {/* Brand Name */}
       {product.categories && product.categories.length > 0 && (
-        <p className="text-xs text-gray-500 mb-1 font-medium">
-          العلامة التجارية {product.categories[0].name}
+        <p className="text-[10px] text-gray-400 mb-1 font-medium truncate">
+          {product.categories[0].name}
         </p>
       )}
       
       {/* Product Name */}
       <Link to={`/product/${product.id}`}>
-        <h4 className="text-sm font-medium mb-2 text-gray-700 leading-tight hover:text-gray-900" 
-            dangerouslySetInnerHTML={{ __html: product.name }}>
-        </h4>
+        <h4 
+          className="text-xs font-semibold mb-1.5 text-gray-800 leading-snug hover:text-gray-900 line-clamp-2 min-h-[2.5rem]" 
+          dangerouslySetInnerHTML={{ __html: product.name }}
+        />
       </Link>
       
       {/* Price */}
-      <p className="text-lg font-bold text-black mb-3">
-        {product.price ? `IQD ${parseInt(product.price).toLocaleString()}` : 'اتصل للسعر'}
+      <p className="text-sm font-bold text-black mb-8">
+        {product.price ? `${parseInt(product.price).toLocaleString()} IQD` : 'اتصل للسعر'}
       </p>
       
       {/* Add to Cart Button */}
       <button
         onClick={() => handleAddToCart(product)}
-        className="absolute bottom-3 right-3 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors duration-200 shadow-lg"
+        className="absolute bottom-2.5 right-2.5 w-9 h-9 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={product.stock_status !== 'instock'}
       >
-        <Plus className="w-5 h-5" />
+        <Plus className="w-4 h-4" />
       </button>
     </div>
   );
