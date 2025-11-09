@@ -6,6 +6,7 @@ import Banner from "@/components/Banner";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import InfiniteProductsSection from "@/components/InfiniteProductsSection";
+import CoursesSection from "@/components/CoursesSection";
 import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
 
@@ -63,6 +64,9 @@ const Index = () => {
       
       {/* Always show infinite scroll catalog products section */}
       <InfiniteProductsSection title="كتالوج المنتجات" />
+      
+      {/* Courses Section */}
+      <CoursesSection />
       
       <PartnersSection />
       <BottomNavigation />
