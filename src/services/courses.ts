@@ -14,7 +14,16 @@ export interface Course {
 
 export const fetchCourses = async (): Promise<Course[]> => {
   try {
-    const response = await fetch('https://building-station.com/wpgetapi/tutor-courses');
+    // Call the edge function instead of direct API call
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tutor-lms-proxy`;
+    const response = await fetch(functionUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+    });
+    
     if (!response.ok) {
       throw new Error('Failed to fetch courses');
     }
