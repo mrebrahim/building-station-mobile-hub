@@ -29,19 +29,47 @@ serve(async (req) => {
       );
     }
 
-    // Call Tutor LMS API with authentication
-    const tutorApiUrl = 'https://building-station.com/wpgetapi/tutor-courses';
+    // Try different authentication methods for WPGetAPI
+    // Method 1: Try with Basic Auth
+    const credentials = btoa(`${clientId}:${secret}`);
     
-    console.log('Calling Tutor LMS API...');
-    const response = await fetch(tutorApiUrl, {
+    // Method 2: Try with query parameters (common for WPGetAPI)
+    const tutorApiUrl = `https://building-station.com/wpgetapi/tutor-courses?api_key=${clientId}&api_secret=${secret}`;
+    
+    console.log('Calling Tutor LMS API with authentication...');
+    
+    // Try with Basic Auth first
+    let response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        // Add authentication headers based on Tutor LMS requirements
-        'X-Client-ID': clientId,
-        'X-Secret': secret,
+        'Authorization': `Basic ${credentials}`,
       },
     });
+
+    // If Basic Auth fails, try with query parameters
+    if (!response.ok) {
+      console.log('Basic Auth failed, trying with query parameters...');
+      response = await fetch(tutorApiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    // If both fail, try with custom headers
+    if (!response.ok) {
+      console.log('Query params failed, trying with custom headers...');
+      response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': clientId,
+          'X-API-Secret': secret,
+        },
+      });
+    }
 
     if (!response.ok) {
       console.error(`Tutor LMS API error: ${response.status} ${response.statusText}`);
