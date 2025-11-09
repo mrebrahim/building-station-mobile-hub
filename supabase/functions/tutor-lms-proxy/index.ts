@@ -29,57 +29,79 @@ serve(async (req) => {
       );
     }
 
-    // Try different authentication methods for WPGetAPI
-    // Method 1: Try with Basic Auth
-    const credentials = btoa(`${clientId}:${secret}`);
+    // WPGetAPI typically uses query parameters for authentication
+    console.log('Attempting to call Tutor LMS API...');
+    console.log('Client ID (first 10 chars):', clientId.substring(0, 10) + '...');
     
-    // Method 2: Try with query parameters (common for WPGetAPI)
-    const tutorApiUrl = `https://building-station.com/wpgetapi/tutor-courses?api_key=${clientId}&api_secret=${secret}`;
-    
-    console.log('Calling Tutor LMS API with authentication...');
-    
-    // Try with Basic Auth first
+    // Try method 1: Simple endpoint without auth (if it's public)
+    console.log('Method 1: Trying without authentication...');
     let response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${credentials}`,
       },
     });
+    
+    let responseText = await response.text();
+    console.log('Method 1 Status:', response.status);
+    console.log('Method 1 Response (first 200 chars):', responseText.substring(0, 200));
 
-    // If Basic Auth fails, try with query parameters
+    // Try method 2: With query parameters
     if (!response.ok) {
-      console.log('Basic Auth failed, trying with query parameters...');
-      response = await fetch(tutorApiUrl, {
+      console.log('Method 2: Trying with query parameters...');
+      const urlWithParams = `https://building-station.com/wpgetapi/tutor-courses?client_id=${clientId}&secret=${secret}`;
+      response = await fetch(urlWithParams, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+      responseText = await response.text();
+      console.log('Method 2 Status:', response.status);
+      console.log('Method 2 Response (first 200 chars):', responseText.substring(0, 200));
     }
 
-    // If both fail, try with custom headers
+    // Try method 3: With Basic Auth
     if (!response.ok) {
-      console.log('Query params failed, trying with custom headers...');
+      console.log('Method 3: Trying with Basic Authentication...');
+      const credentials = btoa(`${clientId}:${secret}`);
       response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': clientId,
-          'X-API-Secret': secret,
+          'Authorization': `Basic ${credentials}`,
         },
       });
+      responseText = await response.text();
+      console.log('Method 3 Status:', response.status);
+      console.log('Method 3 Response (first 200 chars):', responseText.substring(0, 200));
+    }
+
+    // Try method 4: Common WPGetAPI format
+    if (!response.ok) {
+      console.log('Method 4: Trying WPGetAPI standard format...');
+      response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'WPGETAPI-Key': clientId,
+          'WPGETAPI-Secret': secret,
+        },
+      });
+      responseText = await response.text();
+      console.log('Method 4 Status:', response.status);
+      console.log('Method 4 Response (first 200 chars):', responseText.substring(0, 200));
     }
 
     if (!response.ok) {
-      console.error(`Tutor LMS API error: ${response.status} ${response.statusText}`);
-      const errorText = await response.text();
-      console.error('Error details:', errorText);
+      console.error(`All methods failed. Final status: ${response.status}`);
+      console.error('Final response text:', responseText);
       
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to fetch courses from Tutor LMS',
-          status: response.status 
+          error: 'Failed to fetch courses from Tutor LMS. Please check the API endpoint and credentials.',
+          status: response.status,
+          details: 'All authentication methods failed. Check edge function logs for more details.'
         }),
         { 
           status: response.status, 
@@ -88,7 +110,23 @@ serve(async (req) => {
       );
     }
 
-    const data = await response.json();
+    // Try to parse JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', e);
+      return new Response(
+        JSON.stringify({ 
+          error: 'API returned non-JSON response',
+          response: responseText.substring(0, 500)
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
     console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} courses`);
 
     return new Response(
