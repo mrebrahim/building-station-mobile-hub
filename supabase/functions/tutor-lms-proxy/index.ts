@@ -29,79 +29,35 @@ serve(async (req) => {
       );
     }
 
-    // WPGetAPI typically uses query parameters for authentication
-    console.log('Attempting to call Tutor LMS API...');
-    console.log('Client ID (first 10 chars):', clientId.substring(0, 10) + '...');
+    // Call Tutor LMS REST API
+    const tutorApiUrl = 'https://building-station.com/wp-json/tutor/v1/courses';
     
-    // Try method 1: Simple endpoint without auth (if it's public)
-    console.log('Method 1: Trying without authentication...');
-    let response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
+    console.log('Calling Tutor LMS REST API...');
+    
+    // WordPress REST API typically uses Basic Authentication with Application Password
+    const credentials = btoa(`${clientId}:${secret}`);
+    
+    const response = await fetch(tutorApiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`,
       },
     });
-    
-    let responseText = await response.text();
-    console.log('Method 1 Status:', response.status);
-    console.log('Method 1 Response (first 200 chars):', responseText.substring(0, 200));
 
-    // Try method 2: With query parameters
-    if (!response.ok) {
-      console.log('Method 2: Trying with query parameters...');
-      const urlWithParams = `https://building-station.com/wpgetapi/tutor-courses?client_id=${clientId}&secret=${secret}`;
-      response = await fetch(urlWithParams, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      responseText = await response.text();
-      console.log('Method 2 Status:', response.status);
-      console.log('Method 2 Response (first 200 chars):', responseText.substring(0, 200));
-    }
-
-    // Try method 3: With Basic Auth
-    if (!response.ok) {
-      console.log('Method 3: Trying with Basic Authentication...');
-      const credentials = btoa(`${clientId}:${secret}`);
-      response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${credentials}`,
-        },
-      });
-      responseText = await response.text();
-      console.log('Method 3 Status:', response.status);
-      console.log('Method 3 Response (first 200 chars):', responseText.substring(0, 200));
-    }
-
-    // Try method 4: Common WPGetAPI format
-    if (!response.ok) {
-      console.log('Method 4: Trying WPGetAPI standard format...');
-      response = await fetch('https://building-station.com/wpgetapi/tutor-courses', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'WPGETAPI-Key': clientId,
-          'WPGETAPI-Secret': secret,
-        },
-      });
-      responseText = await response.text();
-      console.log('Method 4 Status:', response.status);
-      console.log('Method 4 Response (first 200 chars):', responseText.substring(0, 200));
-    }
+    console.log('API Response Status:', response.status);
+    const responseText = await response.text();
+    console.log('Response (first 300 chars):', responseText.substring(0, 300));
 
     if (!response.ok) {
-      console.error(`All methods failed. Final status: ${response.status}`);
-      console.error('Final response text:', responseText);
+      console.error(`Tutor LMS API error: ${response.status}`);
+      console.error('Error response:', responseText);
       
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to fetch courses from Tutor LMS. Please check the API endpoint and credentials.',
+          error: 'Failed to fetch courses from Tutor LMS',
           status: response.status,
-          details: 'All authentication methods failed. Check edge function logs for more details.'
+          details: responseText.substring(0, 500)
         }),
         { 
           status: response.status, 
@@ -110,15 +66,15 @@ serve(async (req) => {
       );
     }
 
-    // Try to parse JSON
+    // Parse JSON response
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error('Failed to parse response as JSON:', e);
+      console.error('Failed to parse JSON:', e);
       return new Response(
         JSON.stringify({ 
-          error: 'API returned non-JSON response',
+          error: 'Invalid JSON response from API',
           response: responseText.substring(0, 500)
         }),
         { 
