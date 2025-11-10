@@ -38,7 +38,8 @@ serve(async (req) => {
     // Use the API Key and Secret as Basic Authentication
     const credentials = btoa(`${clientId}:${secret}`);
     
-    const response = await fetch(tutorApiUrl, {
+    // Add _embed parameter to get featured images
+    const response = await fetch(`${tutorApiUrl}?_embed`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -48,15 +49,15 @@ serve(async (req) => {
 
     console.log('API Response Status:', response.status);
     const responseText = await response.text();
-    console.log('Response (first 300 chars):', responseText.substring(0, 300));
+    console.log('Response (first 500 chars):', responseText.substring(0, 500));
 
     if (!response.ok) {
-      console.error(`Tutor LMS API error: ${response.status}`);
+      console.error(`WordPress API error: ${response.status}`);
       console.error('Error response:', responseText);
       
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to fetch courses from Tutor LMS',
+          error: 'Failed to fetch courses from WordPress',
           status: response.status,
           details: responseText.substring(0, 500)
         }),
@@ -71,6 +72,13 @@ serve(async (req) => {
     let data;
     try {
       data = JSON.parse(responseText);
+      console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} courses`);
+      
+      // Log first course details to see structure
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('First course keys:', Object.keys(data[0]));
+        console.log('First course sample:', JSON.stringify(data[0]).substring(0, 500));
+      }
     } catch (e) {
       console.error('Failed to parse JSON:', e);
       return new Response(
@@ -84,7 +92,6 @@ serve(async (req) => {
         }
       );
     }
-    console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} courses`);
 
     return new Response(
       JSON.stringify(data),

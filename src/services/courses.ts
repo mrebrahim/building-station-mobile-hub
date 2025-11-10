@@ -29,6 +29,9 @@ export const fetchCourses = async (): Promise<Course[]> => {
     }
     const data = await response.json();
     
+    console.log('Courses fetched successfully:', data.length);
+    console.log('Sample course data:', data[0] ? JSON.stringify(data[0]).substring(0, 300) : 'No courses');
+    
     // Transform the data to match our interface
     // WordPress REST API returns objects with 'rendered' properties
     return (Array.isArray(data) ? data : []).map((course: any) => {
@@ -43,12 +46,28 @@ export const fetchCourses = async (): Promise<Course[]> => {
         if (!html) return '';
         return html.replace(/<[^>]*>/g, '').trim();
       };
+      
+      // Extract featured image from various possible locations
+      const getFeaturedImage = () => {
+        // Check _embedded for featured image
+        if (course._embedded?.['wp:featuredmedia']?.[0]?.source_url) {
+          return course._embedded['wp:featuredmedia'][0].source_url;
+        }
+        // Check direct properties
+        if (course.featured_image_url) return course.featured_image_url;
+        if (course.featured_media_url) return course.featured_media_url;
+        if (course.thumbnail) return course.thumbnail;
+        if (course.featured_image) return course.featured_image;
+        // Check meta
+        if (course.meta?.featured_image) return course.meta.featured_image;
+        return '';
+      };
 
       return {
         id: course.id || course.course_id || 0,
         title: stripHtmlTags(getRenderedText(course.title)) || 'بدون عنوان',
-        thumbnail: course.featured_image_url || course.thumbnail || course.featured_image || '',
-        excerpt: stripHtmlTags(getRenderedText(course.excerpt)) || stripHtmlTags(getRenderedText(course.content)),
+        thumbnail: getFeaturedImage(),
+        excerpt: stripHtmlTags(getRenderedText(course.excerpt)) || stripHtmlTags(getRenderedText(course.content)).substring(0, 150),
         price: course.price || course.meta?.price || 0,
         level: course.level || course.meta?.level || 'مبتدئ',
         lessons_count: course.lessons_count || course.meta?.lessons_count || 0,
