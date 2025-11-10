@@ -29,12 +29,13 @@ serve(async (req) => {
       );
     }
 
-    // Call Tutor LMS REST API
-    const tutorApiUrl = 'https://building-station.com/wp-json/tutor/v1/courses';
+    // Call WordPress REST API for courses
+    const tutorApiUrl = 'https://building-station.com/wp-json/wp/v2/courses';
     
-    console.log('Calling Tutor LMS REST API...');
+    console.log('Calling WordPress REST API for courses...');
+    console.log('Using API endpoint:', tutorApiUrl);
     
-    // WordPress REST API typically uses Basic Authentication with Application Password
+    // Use the API Key and Secret as Basic Authentication
     const credentials = btoa(`${clientId}:${secret}`);
     
     const response = await fetch(tutorApiUrl, {
