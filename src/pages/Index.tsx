@@ -51,6 +51,10 @@ const Index = () => {
       <Header />
       <Banner />
       <FeaturedCategoriesSection />
+      
+      {/* Courses Section */}
+      <CoursesSection />
+      
       <BrandsSection />
       
       {/* Show featured products if available */}
@@ -64,9 +68,6 @@ const Index = () => {
       
       {/* Always show infinite scroll catalog products section */}
       <InfiniteProductsSection title="كتالوج المنتجات" />
-      
-      {/* Courses Section */}
-      <CoursesSection />
       
       <PartnersSection />
       <BottomNavigation />
