@@ -30,19 +30,34 @@ export const fetchCourses = async (): Promise<Course[]> => {
     const data = await response.json();
     
     // Transform the data to match our interface
-    return (Array.isArray(data) ? data : []).map((course: any) => ({
-      id: course.id || course.course_id,
-      title: course.title || course.post_title,
-      thumbnail: course.thumbnail || course.featured_image || '',
-      excerpt: course.excerpt || course.short_description || '',
-      price: course.price || 0,
-      level: course.level || 'مبتدئ',
-      lessons_count: course.lessons_count || 0,
-      author_name: course.author_name || 'غير محدد',
-      description: course.description || course.content || '',
-      curriculum: course.curriculum || null,
-      category: course.category || 'عام',
-    }));
+    // WordPress REST API returns objects with 'rendered' properties
+    return (Array.isArray(data) ? data : []).map((course: any) => {
+      const getRenderedText = (field: any) => {
+        if (!field) return '';
+        if (typeof field === 'string') return field;
+        if (typeof field === 'object' && field.rendered) return field.rendered;
+        return '';
+      };
+
+      const stripHtmlTags = (html: string) => {
+        if (!html) return '';
+        return html.replace(/<[^>]*>/g, '').trim();
+      };
+
+      return {
+        id: course.id || course.course_id || 0,
+        title: stripHtmlTags(getRenderedText(course.title)) || 'بدون عنوان',
+        thumbnail: course.featured_image_url || course.thumbnail || course.featured_image || '',
+        excerpt: stripHtmlTags(getRenderedText(course.excerpt)) || stripHtmlTags(getRenderedText(course.content)),
+        price: course.price || course.meta?.price || 0,
+        level: course.level || course.meta?.level || 'مبتدئ',
+        lessons_count: course.lessons_count || course.meta?.lessons_count || 0,
+        author_name: course.author_name || course.meta?.author_name || 'غير محدد',
+        description: getRenderedText(course.content) || getRenderedText(course.description),
+        curriculum: course.curriculum || null,
+        category: course.category || course.meta?.category || 'عام',
+      };
+    });
   } catch (error) {
     console.error('Error fetching courses:', error);
     throw error;
