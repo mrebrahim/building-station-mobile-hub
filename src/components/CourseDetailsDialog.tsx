@@ -5,6 +5,8 @@ import { GraduationCap, BookOpen, User, ShoppingCart } from "lucide-react";
 import { Course } from "@/services/courses";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 interface CourseDetailsDialogProps {
   course: Course | null;
@@ -14,6 +16,30 @@ interface CourseDetailsDialogProps {
 
 const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialogProps) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  
+  useEffect(() => {
+    if (!course) return;
+    
+    // Check if user is logged in
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      
+      // Check if user is enrolled in this course
+      if (user) {
+        supabase
+          .from('user_courses')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('course_id', course.id)
+          .single()
+          .then(({ data }) => {
+            setIsEnrolled(!!data);
+          });
+      }
+    });
+  }, [course]);
   
   if (!course) return null;
 
@@ -22,7 +48,22 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
     return `${price} ر.س`;
   };
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      onOpenChange(false);
+      navigate('/auth');
+      return;
+    }
+
+    if (isEnrolled) {
+      toast.info('أنت مسجل بالفعل في هذا الكورس');
+      onOpenChange(false);
+      navigate('/my-courses');
+      return;
+    }
+
     if (!course.product_id) {
       toast.error('عذراً، لا يمكن التسجيل في هذا الكورس حالياً');
       return;
@@ -44,7 +85,8 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
         price: course.price,
         quantity: 1,
         image: course.thumbnail,
-        type: 'course' // Mark as course for special handling
+        type: 'course',
+        course_id: course.id
       });
       
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -93,14 +135,28 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
           </div>
           
           <div className="flex items-center justify-between">
-            <Button 
-              onClick={handleEnroll}
-              size="lg"
-              className="gap-2"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
-            </Button>
+            {isEnrolled ? (
+              <Button 
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate('/my-courses');
+                }}
+                size="lg"
+                className="gap-2"
+              >
+                <GraduationCap className="w-5 h-5" />
+                ادخل الكورس
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleEnroll}
+                size="lg"
+                className="gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
+              </Button>
+            )}
             <div className="text-3xl font-bold text-primary">
               {formatPrice(course.price)}
             </div>

@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_courses: {
+        Row: {
+          course_id: number
+          enrolled_at: string | null
+          id: string
+          product_id: number
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          course_id: number
+          enrolled_at?: string | null
+          id?: string
+          product_id: number
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          course_id?: number
+          enrolled_at?: string | null
+          id?: string
+          product_id?: number
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       wc_categories: {
         Row: {
           created_at: string | null

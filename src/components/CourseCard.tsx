@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Course } from "@/services/courses";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 interface CourseCardProps {
   course: Course;
@@ -12,6 +14,28 @@ interface CourseCardProps {
 
 const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+  useEffect(() => {
+    // Check if user is logged in
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      
+      // Check if user is enrolled in this course
+      if (user) {
+        supabase
+          .from('user_courses')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('course_id', course.id)
+          .single()
+          .then(({ data }) => {
+            setIsEnrolled(!!data);
+          });
+      }
+    });
+  }, [course.id]);
   
   const truncateText = (text: string, maxLength: number) => {
     if (!text || typeof text !== 'string') return '';
@@ -24,7 +48,20 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
     return `${price} ر.س`;
   };
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      navigate('/auth');
+      return;
+    }
+
+    if (isEnrolled) {
+      toast.info('أنت مسجل بالفعل في هذا الكورس');
+      navigate('/my-courses');
+      return;
+    }
+
     if (!course.product_id) {
       toast.error('عذراً، لا يمكن التسجيل في هذا الكورس حالياً');
       return;
@@ -46,7 +83,8 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
         price: course.price,
         quantity: 1,
         image: course.thumbnail,
-        type: 'course' // Mark as course for special handling
+        type: 'course',
+        course_id: course.id
       });
       
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -113,14 +151,25 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
         >
           التفاصيل
         </Button>
-        <Button 
-          onClick={handleEnroll}
-          className="flex-1"
-          variant="default"
-        >
-          <ShoppingCart className="w-4 h-4 ml-2" />
-          {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
-        </Button>
+        {isEnrolled ? (
+          <Button 
+            onClick={() => navigate('/my-courses')}
+            className="flex-1"
+            variant="default"
+          >
+            <GraduationCap className="w-4 h-4 ml-2" />
+            ادخل الكورس
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleEnroll}
+            className="flex-1"
+            variant="default"
+          >
+            <ShoppingCart className="w-4 h-4 ml-2" />
+            {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

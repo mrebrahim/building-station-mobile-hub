@@ -9,6 +9,7 @@ import DeliveryInformation from "@/components/checkout/DeliveryInformation";
 import OrderSummaryDetail from "@/components/checkout/OrderSummaryDetail";
 import CheckoutFooter from "@/components/checkout/CheckoutFooter";
 import { wooCommerceService } from "@/services/woocommerce/index";
+import { supabase } from "@/integrations/supabase/client";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -120,13 +121,40 @@ const Checkout = () => {
       if (response && response.id) {
         toast.success("تم إنشاء الطلب بنجاح!");
         
+        // Check if there are any courses in the order and enroll the user
+        const { data: { session } } = await supabase.auth.getSession();
+        const hasCourses = orderSummary.items.some(item => item.type === 'course');
+        
+        if (hasCourses && session) {
+          try {
+            const { data, error } = await supabase.functions.invoke('enroll-courses', {
+              body: { items: orderSummary.items }
+            });
+            
+            if (error) {
+              console.error('Error enrolling in courses:', error);
+            } else {
+              console.log('Course enrollment result:', data);
+              if (data?.enrolled > 0) {
+                toast.success(data.message);
+              }
+            }
+          } catch (enrollError) {
+            console.error('Course enrollment error:', enrollError);
+          }
+        }
+        
         // Clear cart
         localStorage.removeItem('cart');
         window.dispatchEvent(new Event('cartUpdated'));
         
         // Redirect to success page or order confirmation
         setTimeout(() => {
-          navigate('/');
+          if (hasCourses) {
+            navigate('/my-courses');
+          } else {
+            navigate('/');
+          }
         }, 2000);
       } else {
         toast.error("حدث خطأ في إنشاء الطلب");

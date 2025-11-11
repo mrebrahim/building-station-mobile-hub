@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe, HelpCircle, Users, LogOut } from "lucide-react";
+import { ArrowLeft, Globe, HelpCircle, Users, LogOut, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
@@ -36,6 +36,15 @@ const Profile = () => {
           </Link>
         </div>
 
+        {/* My Courses Button */}
+        <div className="mb-8">
+          <Link to="/my-courses">
+            <Button className="w-full bg-primary text-primary-foreground py-4 rounded-xl text-lg">
+              <GraduationCap className="w-5 h-5 ml-2" />
+              كورساتي
+            </Button>
+          </Link>
+        </div>
 
         {/* Contact Section */}
         <div className="mb-6">
