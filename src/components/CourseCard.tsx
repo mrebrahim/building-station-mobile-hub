@@ -1,7 +1,9 @@
-import { GraduationCap, BookOpen, User } from "lucide-react";
+import { GraduationCap, BookOpen, User, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/services/courses";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface CourseCardProps {
   course: Course;
@@ -9,6 +11,8 @@ interface CourseCardProps {
 }
 
 const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
+  const navigate = useNavigate();
+  
   const truncateText = (text: string, maxLength: number) => {
     if (!text || typeof text !== 'string') return '';
     if (text.length <= maxLength) return text;
@@ -18,6 +22,39 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
   const formatPrice = (price: string | number) => {
     if (!price || price === 0 || price === '0') return 'مجاني';
     return `${price} ر.س`;
+  };
+
+  const handleEnroll = () => {
+    if (!course.product_id) {
+      toast.error('عذراً، لا يمكن التسجيل في هذا الكورس حالياً');
+      return;
+    }
+
+    // Get current cart from localStorage
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if course already in cart
+    const existingItem = cart.find((item: any) => item.id === course.product_id);
+    
+    if (existingItem) {
+      toast.info('الكورس موجود بالفعل في السلة');
+    } else {
+      // Add course to cart as a product
+      cart.push({
+        id: course.product_id,
+        name: course.title,
+        price: course.price,
+        quantity: 1,
+        image: course.thumbnail,
+        type: 'course' // Mark as course for special handling
+      });
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      toast.success('تم إضافة الكورس إلى السلة');
+    }
+    
+    // Navigate to cart
+    navigate('/cart');
   };
 
   return (
@@ -68,13 +105,21 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
         </div>
       </CardContent>
       
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 flex gap-2">
         <Button 
           onClick={() => onDetailsClick(course)}
-          className="w-full"
+          className="flex-1"
           variant="outline"
         >
           التفاصيل
+        </Button>
+        <Button 
+          onClick={handleEnroll}
+          className="flex-1"
+          variant="default"
+        >
+          <ShoppingCart className="w-4 h-4 ml-2" />
+          {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
         </Button>
       </CardFooter>
     </Card>

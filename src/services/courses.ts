@@ -10,6 +10,7 @@ export interface Course {
   description?: string;
   curriculum?: any;
   category?: string;
+  product_id?: number; // WooCommerce Product ID for enrollment
 }
 
 export const fetchCourses = async (): Promise<Course[]> => {
@@ -75,6 +76,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
         description: getRenderedText(course.content) || getRenderedText(course.description),
         curriculum: course.curriculum || null,
         category: course.category || course.meta?.category || 'عام',
+        product_id: course.product_id || course.meta?.product_id || course.id, // Use course ID as fallback
       };
     });
   } catch (error) {

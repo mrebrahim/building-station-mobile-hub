@@ -1,7 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, BookOpen, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GraduationCap, BookOpen, User, ShoppingCart } from "lucide-react";
 import { Course } from "@/services/courses";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface CourseDetailsDialogProps {
   course: Course | null;
@@ -10,11 +13,47 @@ interface CourseDetailsDialogProps {
 }
 
 const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialogProps) => {
+  const navigate = useNavigate();
+  
   if (!course) return null;
 
   const formatPrice = (price: string | number) => {
     if (!price || price === 0 || price === '0') return 'مجاني';
     return `${price} ر.س`;
+  };
+
+  const handleEnroll = () => {
+    if (!course.product_id) {
+      toast.error('عذراً، لا يمكن التسجيل في هذا الكورس حالياً');
+      return;
+    }
+
+    // Get current cart from localStorage
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if course already in cart
+    const existingItem = cart.find((item: any) => item.id === course.product_id);
+    
+    if (existingItem) {
+      toast.info('الكورس موجود بالفعل في السلة');
+    } else {
+      // Add course to cart as a product
+      cart.push({
+        id: course.product_id,
+        name: course.title,
+        price: course.price,
+        quantity: 1,
+        image: course.thumbnail,
+        type: 'course' // Mark as course for special handling
+      });
+      
+      localStorage.setItem('cart', JSON.stringify(cart));
+      toast.success('تم إضافة الكورس إلى السلة');
+    }
+    
+    // Close dialog and navigate to cart
+    onOpenChange(false);
+    navigate('/cart');
   };
 
   return (
@@ -53,8 +92,18 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
             </div>
           </div>
           
-          <div className="text-3xl font-bold text-primary text-right">
-            {formatPrice(course.price)}
+          <div className="flex items-center justify-between">
+            <Button 
+              onClick={handleEnroll}
+              size="lg"
+              className="gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
+            </Button>
+            <div className="text-3xl font-bold text-primary">
+              {formatPrice(course.price)}
+            </div>
           </div>
           
           <Tabs defaultValue="description" className="w-full" dir="rtl">
