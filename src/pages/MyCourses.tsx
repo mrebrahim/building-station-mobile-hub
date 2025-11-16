@@ -100,7 +100,7 @@ const MyCourses = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {enrolledCourses.map((course) => (
-              <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+              <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-video overflow-hidden bg-muted">
                   {course.thumbnail ? (
                     <img
@@ -138,9 +138,17 @@ const MyCourses = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-primary/10 text-primary px-3 py-2 rounded-lg text-center font-medium">
-                    متاح الآن
-                  </div>
+                  <a
+                    href={`https://building-station.com/courses/${course.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full bg-primary text-primary-foreground px-4 py-2 rounded-lg text-center font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <BookOpen className="w-4 h-4" />
+                      <span>مشاهدة الكورس</span>
+                    </div>
+                  </a>
                 </CardContent>
               </Card>
             ))}
