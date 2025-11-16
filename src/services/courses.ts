@@ -50,21 +50,30 @@ export const fetchCourses = async (): Promise<Course[]> => {
       
       // Extract featured image from various possible locations
       const getFeaturedImage = () => {
-        // Check _embedded for featured image
+        // Priority 1: Check _embedded for featured image (most reliable)
         if (course._embedded?.['wp:featuredmedia']?.[0]?.source_url) {
           return course._embedded['wp:featuredmedia'][0].source_url;
         }
-        // Check direct properties
+        
+        // Priority 2: Check media_details for better quality
+        if (course._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.large?.source_url) {
+          return course._embedded['wp:featuredmedia'][0].media_details.sizes.large.source_url;
+        }
+        
+        // Priority 3: Check direct properties
         if (course.featured_image_url) return course.featured_image_url;
         if (course.featured_media_url) return course.featured_media_url;
         if (course.thumbnail) return course.thumbnail;
         if (course.featured_image) return course.featured_image;
-        // Check meta
+        
+        // Priority 4: Check meta
         if (course.meta?.featured_image) return course.meta.featured_image;
+        
+        // Fallback: return empty string
         return '';
       };
 
-      return {
+      const courseData = {
         id: course.id || course.course_id || 0,
         title: stripHtmlTags(getRenderedText(course.title)) || 'بدون عنوان',
         thumbnail: getFeaturedImage(),
@@ -78,6 +87,19 @@ export const fetchCourses = async (): Promise<Course[]> => {
         category: course.category || course.meta?.category || 'عام',
         product_id: course.product_id || course.meta?.product_id || course.id, // Use course ID as fallback
       };
+      
+      // Log sample course for debugging
+      if (course.id === data[0]?.id) {
+        console.log('📚 Sample course data:', {
+          title: courseData.title,
+          thumbnail: courseData.thumbnail,
+          hasImage: !!courseData.thumbnail,
+          price: courseData.price,
+          lessons: courseData.lessons_count
+        });
+      }
+      
+      return courseData;
     });
   } catch (error) {
     console.error('Error fetching courses:', error);
