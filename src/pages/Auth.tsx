@@ -54,7 +54,7 @@ const Auth = () => {
       } else {
         const redirectUrl = `${window.location.origin}/`;
         
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -65,6 +65,28 @@ const Auth = () => {
         if (error) {
           toast.error("خطأ في إنشاء الحساب: " + error.message);
           return;
+        }
+
+        // Create WooCommerce customer account after successful signup
+        if (data.user) {
+          try {
+            const { error: wcError } = await supabase.functions.invoke('create-woocommerce-customer', {
+              body: { 
+                email: formData.email,
+                firstName: '',
+                lastName: ''
+              }
+            });
+
+            if (wcError) {
+              console.error('Error creating WooCommerce customer:', wcError);
+              // Don't fail the signup if WooCommerce customer creation fails
+            } else {
+              console.log('WooCommerce customer created successfully');
+            }
+          } catch (wcError) {
+            console.error('Error creating WooCommerce customer:', wcError);
+          }
         }
 
         toast.success("تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني");
