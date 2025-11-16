@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import CourseCard from "./CourseCard";
@@ -84,9 +85,11 @@ const CoursesSection = () => {
       {/* Header with View All button */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-800">الدورات التدريبية</h2>
-        <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 text-sm px-4 py-2">
-          عرض الكل
-        </Button>
+        <Link to="/all-courses">
+          <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 text-sm px-4 py-2">
+            عرض الكل
+          </Button>
+        </Link>
       </div>
 
       {/* Courses Carousel */}
