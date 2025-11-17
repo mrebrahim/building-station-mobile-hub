@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,31 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Tutor LMS Proxy: Starting request');
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'غير مصرح' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'غير مصرح' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Tutor LMS Proxy: Request from user', user.id);
 
     // Get the secrets from environment
     const clientId = Deno.env.get('TUTOR_LMS_CLIENT_ID');
@@ -21,7 +46,7 @@ serve(async (req) => {
     if (!clientId || !secret) {
       console.error('Missing Tutor LMS credentials');
       return new Response(
-        JSON.stringify({ error: 'Missing Tutor LMS credentials' }),
+        JSON.stringify({ error: 'خطأ في إعدادات الخادم' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -33,7 +58,6 @@ serve(async (req) => {
     const tutorApiUrl = 'https://building-station.com/wp-json/wp/v2/courses';
     
     console.log('Calling WordPress REST API for courses...');
-    console.log('Using API endpoint:', tutorApiUrl);
     
     // Use the API Key and Secret as Basic Authentication
     const credentials = btoa(`${clientId}:${secret}`);
@@ -48,18 +72,14 @@ serve(async (req) => {
     });
 
     console.log('API Response Status:', response.status);
-    const responseText = await response.text();
-    console.log('Response (first 500 chars):', responseText.substring(0, 500));
 
     if (!response.ok) {
-      console.error(`WordPress API error: ${response.status}`);
-      console.error('Error response:', responseText);
+      console.error('WordPress API error:', response.status);
       
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to fetch courses from WordPress',
-          status: response.status,
-          details: responseText.substring(0, 500)
+          error: 'فشل في جلب الكورسات',
+          code: 'TUTOR_API_ERROR'
         }),
         { 
           status: response.status, 
@@ -69,29 +89,8 @@ serve(async (req) => {
     }
 
     // Parse JSON response
-    let data;
-    try {
-      data = JSON.parse(responseText);
-      console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} courses`);
-      
-      // Log first course details to see structure
-      if (Array.isArray(data) && data.length > 0) {
-        console.log('First course keys:', Object.keys(data[0]));
-        console.log('First course sample:', JSON.stringify(data[0]).substring(0, 500));
-      }
-    } catch (e) {
-      console.error('Failed to parse JSON:', e);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Invalid JSON response from API',
-          response: responseText.substring(0, 500)
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+    const data = await response.json();
+    console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} courses`);
 
     return new Response(
       JSON.stringify(data),
@@ -105,7 +104,8 @@ serve(async (req) => {
     console.error('Tutor LMS Proxy error:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+        error: 'حدث خطأ في الخادم',
+        code: 'INTERNAL_ERROR'
       }),
       { 
         status: 500,
