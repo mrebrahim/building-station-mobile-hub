@@ -128,19 +128,33 @@ const Checkout = () => {
         if (hasCourses && session) {
           try {
             const { data, error } = await supabase.functions.invoke('enroll-courses', {
-              body: { items: orderSummary.items }
+              body: { 
+                items: orderSummary.items,
+                billing: {
+                  first_name: formData.firstName,
+                  last_name: formData.lastName,
+                  email: formData.email,
+                  phone: formData.phone,
+                  address_1: formData.street,
+                  city: formData.city,
+                  country: 'IQ'
+                },
+                orderId: response.id
+              }
             });
             
             if (error) {
               console.error('Error enrolling in courses:', error);
+              toast.error('تم إنشاء الطلب لكن حدث خطأ في تسجيل الكورسات');
             } else {
               console.log('Course enrollment result:', data);
               if (data?.enrolled > 0) {
-                toast.success(data.message);
+                toast.success(`✅ ${data.message}`);
               }
             }
           } catch (enrollError) {
             console.error('Course enrollment error:', enrollError);
+            toast.error('حدث خطأ في تسجيل الكورسات');
           }
         }
         
