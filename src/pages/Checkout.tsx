@@ -10,6 +10,7 @@ import OrderSummaryDetail from "@/components/checkout/OrderSummaryDetail";
 import CheckoutFooter from "@/components/checkout/CheckoutFooter";
 import { wooCommerceService } from "@/services/woocommerce/index";
 import { supabase } from "@/integrations/supabase/client";
+import { checkoutSchema } from "@/lib/validation";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -66,9 +67,12 @@ const Checkout = () => {
   const handleSubmit = async () => {
     if (isSubmitting) return;
     
-    // Validate required fields
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
-      toast.error("يرجى ملء جميع الحقول المطلوبة");
+    // Validate input using zod schema
+    const validation = checkoutSchema.safeParse(formData);
+    
+    if (!validation.success) {
+      const error = validation.error.errors[0];
+      toast.error(error.message);
       return;
     }
     

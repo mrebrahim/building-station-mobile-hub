@@ -2,10 +2,10 @@
 project_id = "aegclwuugreshufvisax"
 
 [functions.woocommerce-proxy]
-verify_jwt = false
+verify_jwt = true
 
 [functions.tutor-lms-proxy]
-verify_jwt = false
+verify_jwt = true
 
 [functions.enroll-courses]
 verify_jwt = true

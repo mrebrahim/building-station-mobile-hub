@@ -7,11 +7,17 @@ const corsHeaders = {
 };
 
 const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
-const CONSUMER_KEY = Deno.env.get('WC_CONSUMER_KEY') || 'ck_668bb44e4c0f02715c80f73464b92f44134099c7';
-const CONSUMER_SECRET = Deno.env.get('WC_CONSUMER_SECRET') || 'cs_533cd7f7590a9b313ef7f6421517b81f453cca8d';
 
+// Create Basic Auth header using environment variables
 function createAuthHeader() {
-  const credentials = btoa(`${CONSUMER_KEY}:${CONSUMER_SECRET}`);
+  const consumerKey = Deno.env.get('WC_CONSUMER_KEY');
+  const consumerSecret = Deno.env.get('WC_CONSUMER_SECRET');
+  
+  if (!consumerKey || !consumerSecret) {
+    throw new Error('WooCommerce credentials not configured');
+  }
+  
+  const credentials = btoa(`${consumerKey}:${consumerSecret}`);
   return `Basic ${credentials}`;
 }
 

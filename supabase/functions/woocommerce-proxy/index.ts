@@ -1,5 +1,5 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,12 +7,17 @@ const corsHeaders = {
 };
 
 const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
-const CONSUMER_KEY = 'ck_668bb44e4c0f02715c80f73464b92f44134099c7';
-const CONSUMER_SECRET = 'cs_533cd7f7590a9b313ef7f6421517b81f453cca8d';
 
-// Create Basic Auth header
+// Create Basic Auth header using environment variables
 const createAuthHeader = () => {
-  const credentials = btoa(`${CONSUMER_KEY}:${CONSUMER_SECRET}`);
+  const consumerKey = Deno.env.get('WC_CONSUMER_KEY');
+  const consumerSecret = Deno.env.get('WC_CONSUMER_SECRET');
+  
+  if (!consumerKey || !consumerSecret) {
+    throw new Error('WooCommerce credentials not configured');
+  }
+  
+  const credentials = btoa(`${consumerKey}:${consumerSecret}`);
   return `Basic ${credentials}`;
 };
 
@@ -23,6 +28,30 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'غير مصرح' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'غير مصرح' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Parse the request body to get the endpoint and parameters
     const requestBody = await req.json();
     const { endpoint, params, method = 'GET', body } = requestBody;
@@ -30,7 +59,7 @@ serve(async (req) => {
     if (!endpoint) {
       console.error('Missing endpoint in request body');
       return new Response(
-        JSON.stringify({ error: 'Missing endpoint parameter' }),
+        JSON.stringify({ error: 'معامل نقطة النهاية مفقود' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -38,17 +67,13 @@ serve(async (req) => {
       );
     }
 
-    console.log('WooCommerce Proxy - Endpoint:', endpoint);
-    console.log('WooCommerce Proxy - Params:', params);
-    console.log('WooCommerce Proxy - Method:', method);
+    console.log('WooCommerce Proxy - User:', user.id, 'Endpoint:', endpoint);
 
     // Build the WooCommerce API URL
     let woocommerceUrl = `${WC_BASE_URL}${endpoint}`;
     if (params) {
       woocommerceUrl += `?${params}`;
     }
-
-    console.log('WooCommerce Proxy - Making request to:', woocommerceUrl);
 
     // Make the request to WooCommerce API
     const response = await fetch(woocommerceUrl, {
@@ -62,22 +87,14 @@ serve(async (req) => {
     });
 
     console.log('WooCommerce API response status:', response.status);
-    console.log('WooCommerce API response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('WooCommerce API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorText,
-        url: woocommerceUrl
-      });
+      console.error('WooCommerce API error:', response.status, response.statusText);
       
       return new Response(
         JSON.stringify({ 
-          error: `WooCommerce API error: ${response.status} - ${response.statusText}`,
-          details: errorText,
-          url: woocommerceUrl
+          error: 'فشل طلب WooCommerce',
+          code: 'WC_API_ERROR'
         }),
         { 
           status: response.status,
@@ -87,7 +104,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('WooCommerce API response data count:', Array.isArray(data) ? data.length : 'single object');
+    console.log('WooCommerce API success - data count:', Array.isArray(data) ? data.length : 'single object');
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -97,9 +114,8 @@ serve(async (req) => {
     console.error('WooCommerce Proxy error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message,
-        stack: error.stack
+        error: 'حدث خطأ في الخادم',
+        code: 'INTERNAL_ERROR'
       }),
       { 
         status: 500,

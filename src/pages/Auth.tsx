@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { authSchema } from "@/lib/validation";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,13 +26,16 @@ const Auth = () => {
     e.preventDefault();
     if (loading) return;
 
-    if (!formData.email || !formData.password) {
-      toast.error("يرجى ملء جميع الحقول المطلوبة");
-      return;
-    }
+    // Validate input using zod schema
+    const validation = authSchema.safeParse({
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: isLogin ? undefined : formData.confirmPassword,
+    });
 
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      toast.error("كلمات المرور غير متطابقة");
+    if (!validation.success) {
+      const error = validation.error.errors[0];
+      toast.error(error.message);
       return;
     }
 
