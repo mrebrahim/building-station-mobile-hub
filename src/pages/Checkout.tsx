@@ -140,14 +140,28 @@ const Checkout = () => {
         toast.success("تم إنشاء الطلب بنجاح!");
         
         // Check if there are any courses in the order and enroll the user
-        const { data: { session } } = await supabase.auth.getSession();
         const hasCourses = orderSummary.items.some(item => item.type === 'course');
         
-        if (hasCourses && session) {
+        if (hasCourses) {
+          // Verify user is authenticated before enrolling
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            toast.error('يجب تسجيل الدخول لشراء الكورسات');
+            navigate('/auth?redirect=/checkout');
+            return;
+          }
+
+          console.log('📚 Enrolling user in courses...');
+          
           try {
             const { data, error } = await supabase.functions.invoke('enroll-courses', {
               body: { 
-                items: orderSummary.items,
+                items: orderSummary.items.map(item => ({
+                  ...item,
+                  type: item.type || 'product',
+                  course_id: item.course_id || item.id
+                })),
                 billing: {
                   first_name: formData.firstName,
                   last_name: formData.lastName,
@@ -162,17 +176,22 @@ const Checkout = () => {
             });
             
             if (error) {
-              console.error('Error enrolling in courses:', error);
+              console.error('❌ Enrollment error:', error);
               toast.error('تم إنشاء الطلب لكن حدث خطأ في تسجيل الكورسات');
-            } else {
-              console.log('Course enrollment result:', data);
-              if (data?.enrolled > 0) {
-                toast.success(`✅ ${data.message}`);
+            } else if (data?.success) {
+              console.log('✅ Enrollment successful:', data);
+              if (data.enrolled > 0) {
+                toast.success(`✅ تم تسجيلك في ${data.enrolled} كورس بنجاح!`);
               }
             }
-          } catch (enrollError) {
-            console.error('Course enrollment error:', enrollError);
-            toast.error('حدث خطأ في تسجيل الكورسات');
+          } catch (enrollError: any) {
+            console.error('❌ Course enrollment exception:', enrollError);
+            if (enrollError?.message?.includes('AUTH_REQUIRED')) {
+              toast.error('انتهت جلستك. يرجى تسجيل الدخول مرة أخرى');
+              navigate('/auth?redirect=/checkout');
+            } else {
+              toast.error('حدث خطأ في تسجيل الكورسات');
+            }
           }
         }
         
