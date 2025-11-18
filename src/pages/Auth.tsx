@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ const Auth = () => {
     confirmPassword: ""
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -54,7 +56,7 @@ const Auth = () => {
         }
 
         toast.success("تم تسجيل الدخول بنجاح!");
-        navigate('/');
+        navigate(redirectTo);
       } else {
         const redirectUrl = `${window.location.origin}/`;
         
