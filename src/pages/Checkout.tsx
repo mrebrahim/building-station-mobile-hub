@@ -40,6 +40,20 @@ const Checkout = () => {
     const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
     const subtotal = savedCart.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
     
+    // Check if cart contains courses and user is not authenticated
+    const hasCourses = savedCart.some((item: any) => item.type === 'course');
+    
+    if (hasCourses) {
+      // Check authentication status
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          toast.error('يجب تسجيل الدخول لشراء الكورسات');
+          navigate('/auth?redirect=/checkout');
+          return;
+        }
+      });
+    }
+    
     setOrderSummary({
       items: savedCart,
       subtotal: subtotal,
