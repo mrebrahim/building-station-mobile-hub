@@ -28,202 +28,149 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
+    // Create Supabase client with the auth header from the request
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error('No authorization header found');
-      return new Response(
-        JSON.stringify({ error: 'غير مصرح', success: false }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: authHeader },
+          headers: { Authorization: authHeader || '' },
         },
       }
     );
 
-    // Get the user
+    // Get the user (verify_jwt = true already ensures authentication)
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-      console.error('Authentication failed:', authError);
+      console.error('Authentication error:', authError?.message || 'No user found');
       return new Response(
-        JSON.stringify({ error: 'غير مصرح', success: false }),
+        JSON.stringify({ 
+          error: 'يجب تسجيل الدخول أولاً', 
+          success: false,
+          code: 'AUTH_REQUIRED'
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('✅ User authenticated:', user.id, user.email);
 
     // Get the request body
     const { items, billing, orderId } = await req.json();
     
-    console.log('Enrolling user in courses:', { userId: user.id, email: user.email, items, orderId });
+    console.log('📥 Request data:', { 
+      userId: user.id, 
+      email: user.email, 
+      itemCount: items?.length,
+      orderId 
+    });
 
-    // Filter items that are courses
-    const courseItems = items.filter((item: any) => item.type === 'course' && item.course_id);
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      console.error('❌ No items provided');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          message: 'لا توجد عناصر في الطلب',
+          enrolled: 0
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Filter items that are courses and ensure course_id is set
+    const courseItems = items
+      .filter((item: any) => item.type === 'course')
+      .map((item: any) => ({
+        ...item,
+        course_id: item.course_id || item.id // Fallback to id if course_id is missing
+      }))
+      .filter((item: any) => item.course_id); // Only include items with valid course_id
 
     if (courseItems.length === 0) {
+      console.log('⚠️ No courses found in order');
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'لا توجد كورسات للتسجيل',
-          enrolled: 0
+          enrolled: 0,
+          failed: 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Step 1: Get or create WooCommerce customer
-    let wcCustomerId;
-    try {
-      // Try to find customer by email
-      const customerSearchUrl = `${WC_BASE_URL}/customers?email=${encodeURIComponent(user.email || billing?.email)}`;
-      const searchResponse = await fetch(customerSearchUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': createAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+    console.log(`📚 Processing enrollment for ${courseItems.length} course(s)...`);
 
-      if (searchResponse.ok) {
-        const customers = await searchResponse.json();
-        if (customers && customers.length > 0) {
-          wcCustomerId = customers[0].id;
-          console.log('Found existing WooCommerce customer:', wcCustomerId);
-        }
-      }
-
-      // Create customer if not found
-      if (!wcCustomerId) {
-        console.log('Creating new WooCommerce customer...');
-        const createCustomerUrl = `${WC_BASE_URL}/customers`;
-        const customerData = {
-          email: user.email || billing?.email,
-          first_name: billing?.first_name || '',
-          last_name: billing?.last_name || '',
-          username: (user.email || billing?.email)?.split('@')[0] || `user_${Date.now()}`,
-        };
-
-        const createResponse = await fetch(createCustomerUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': createAuthHeader(),
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(customerData),
-        });
-
-        if (createResponse.ok) {
-          const newCustomer = await createResponse.json();
-          wcCustomerId = newCustomer.id;
-          console.log('Created new WooCommerce customer:', wcCustomerId);
-        } else {
-          const errorText = await createResponse.text();
-          console.error('Failed to create WooCommerce customer:', errorText);
-        }
-      }
-    } catch (error) {
-      console.error('Error getting/creating WooCommerce customer:', error);
-    }
-
-    // Step 2: Create WooCommerce order for each course
-    const orderResults = [];
+    // Enroll user in each course
+    const enrollmentResults = [];
+    
     for (const item of courseItems) {
       try {
-        const orderData: any = {
-          customer_id: wcCustomerId || 0,
-          payment_method: 'cod',
-          payment_method_title: 'الدفع عند الاستلام',
-          set_paid: true,
-          billing: billing || {
-            first_name: billing?.first_name || '',
-            last_name: billing?.last_name || '',
-            email: user.email || billing?.email,
-          },
-          line_items: [
-            {
-              product_id: item.id,
-              quantity: 1,
-            }
-          ],
-          meta_data: [
-            {
-              key: '_supabase_user_id',
-              value: user.id
-            },
-            {
-              key: '_course_id',
-              value: item.course_id
-            }
-          ]
-        };
-
-        console.log('Creating WooCommerce order for course:', item.course_id);
+        console.log(`➡️ Enrolling in course ${item.course_id} (Product ID: ${item.id})`);
         
-        const orderUrl = `${WC_BASE_URL}/orders`;
-        const orderResponse = await fetch(orderUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': createAuthHeader(),
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData),
-        });
+        // Check if already enrolled
+        const { data: existingEnrollment } = await supabaseClient
+          .from('user_courses')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('course_id', item.course_id)
+          .maybeSingle();
 
-        if (orderResponse.ok) {
-          const order = await orderResponse.json();
-          console.log('WooCommerce order created successfully:', order.id);
-          
-          // Also save to Supabase for tracking
-          const { error: enrollError } = await supabaseClient
-            .from('user_courses')
-            .insert({
-              user_id: user.id,
-              course_id: item.course_id,
-              product_id: item.id,
-              status: 'active'
-            });
-
-          if (enrollError) {
-            console.error('Error saving enrollment to Supabase:', enrollError);
-          }
-
-          orderResults.push({ 
+        if (existingEnrollment) {
+          console.log(`ℹ️ User already enrolled in course ${item.course_id}`);
+          enrollmentResults.push({ 
             success: true, 
-            courseId: item.course_id, 
-            orderId: order.id 
+            courseId: item.course_id,
+            message: 'Already enrolled'
+          });
+          continue;
+        }
+
+        // Save enrollment to database
+        const { error: enrollError } = await supabaseClient
+          .from('user_courses')
+          .insert({
+            user_id: user.id,
+            course_id: item.course_id,
+            product_id: item.id,
+            status: 'active'
+          });
+
+        if (enrollError) {
+          console.error(`❌ Error enrolling in course ${item.course_id}:`, enrollError);
+          enrollmentResults.push({ 
+            success: false, 
+            courseId: item.course_id,
+            error: enrollError.message
           });
         } else {
-          const errorText = await orderResponse.text();
-          console.error('Failed to create WooCommerce order:', errorText);
-          orderResults.push({ 
-            success: false, 
-            courseId: item.course_id, 
-            error: errorText 
+          console.log(`✅ Successfully enrolled in course ${item.course_id}`);
+          enrollmentResults.push({ 
+            success: true, 
+            courseId: item.course_id,
+            orderId: orderId
           });
         }
       } catch (error) {
-        console.error('Error creating order for course:', item.course_id, error);
-        orderResults.push({ 
+        console.error(`❌ Exception enrolling in course ${item.course_id}:`, error);
+        enrollmentResults.push({ 
           success: false, 
-          courseId: item.course_id, 
-          error: error.message 
+          courseId: item.course_id,
+          error: error.message
         });
       }
     }
 
-    const successful = orderResults.filter(r => r.success).length;
-    const failed = orderResults.filter(r => !r.success).length;
+    const successful = enrollmentResults.filter(r => r.success).length;
+    const failed = enrollmentResults.filter(r => !r.success).length;
 
-    console.log('Final enrollment results:', { successful, failed, details: orderResults });
+    console.log(`📊 Enrollment summary: ${successful} succeeded, ${failed} failed`);
 
     return new Response(
       JSON.stringify({ 
@@ -231,23 +178,29 @@ serve(async (req) => {
         enrolled: successful,
         failed: failed,
         message: successful > 0 
-          ? `تم تسجيلك في ${successful} كورس بنجاح على الموقع`
+          ? `تم تسجيلك في ${successful} كورس بنجاح!`
           : 'فشل التسجيل في الكورسات',
-        details: orderResults
+        details: enrollmentResults
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
 
   } catch (error) {
-    console.error('Error enrolling in courses:', error);
+    console.error('❌ Fatal error in enroll-courses:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        success: false
+        success: false,
+        error: 'حدث خطأ في الخادم',
+        message: 'فشل التسجيل في الكورسات',
+        enrolled: 0,
+        code: 'INTERNAL_ERROR'
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
