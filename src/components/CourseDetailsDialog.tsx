@@ -136,17 +136,19 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
           
           <div className="flex items-center justify-between">
             {isEnrolled ? (
-              <Button 
-                onClick={() => {
-                  onOpenChange(false);
-                  navigate('/my-courses');
-                }}
-                size="lg"
-                className="gap-2"
+              <a
+                href={course.link || `https://building-station.com/courses/${course.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <GraduationCap className="w-5 h-5" />
-                ادخل الكورس
-              </Button>
+                <Button 
+                  size="lg"
+                  className="gap-2"
+                >
+                  <GraduationCap className="w-5 h-5" />
+                  ابدأ الدراسة
+                </Button>
+              </a>
             ) : (
               <Button 
                 onClick={handleEnroll}

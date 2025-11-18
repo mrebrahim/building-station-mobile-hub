@@ -152,14 +152,20 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
           التفاصيل
         </Button>
         {isEnrolled ? (
-          <Button 
-            onClick={() => navigate('/my-courses')}
+          <a
+            href={course.link || `https://building-station.com/courses/${course.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex-1"
-            variant="default"
           >
-            <GraduationCap className="w-4 h-4 ml-2" />
-            ادخل الكورس
-          </Button>
+            <Button 
+              className="w-full"
+              variant="default"
+            >
+              <GraduationCap className="w-4 h-4 ml-2" />
+              ابدأ الدراسة
+            </Button>
+          </a>
         ) : (
           <Button 
             onClick={handleEnroll}

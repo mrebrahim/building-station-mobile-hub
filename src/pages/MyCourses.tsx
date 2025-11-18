@@ -139,7 +139,7 @@ const MyCourses = () => {
                   </div>
                   
                   <a
-                    href={`https://building-station.com/courses/${course.id}`}
+                    href={course.link || `https://building-station.com/courses/${course.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full bg-primary text-primary-foreground px-4 py-2 rounded-lg text-center font-medium hover:bg-primary/90 transition-colors"
