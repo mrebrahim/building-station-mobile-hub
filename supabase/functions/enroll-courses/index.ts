@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,26 +31,51 @@ serve(async (req) => {
     // Create Supabase client with the auth header from the request
     const authHeader = req.headers.get('Authorization');
     
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader || '' },
-        },
-      }
-    );
-
-    // Get the user (verify_jwt = true already ensures authentication)
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      console.error('Authentication error:', authError?.message || 'No user found');
+    if (!authHeader) {
+      console.error('❌ No Authorization header provided');
       return new Response(
         JSON.stringify({ 
           error: 'يجب تسجيل الدخول أولاً', 
           success: false,
           code: 'AUTH_REQUIRED'
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    // Get the user (verify_jwt = true already ensures authentication at gateway level)
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError) {
+      console.error('❌ Auth error:', authError.message);
+      return new Response(
+        JSON.stringify({ 
+          error: 'خطأ في التحقق من الهوية', 
+          success: false,
+          code: 'AUTH_ERROR',
+          details: authError.message
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!user) {
+      console.error('❌ No user found in JWT');
+      return new Response(
+        JSON.stringify({ 
+          error: 'يجب تسجيل الدخول أولاً', 
+          success: false,
+          code: 'NO_USER'
         }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
