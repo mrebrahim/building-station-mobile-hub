@@ -34,9 +34,10 @@ serve(async (req) => {
     if (action === 'list') {
       console.log('Fetching courses list (public)...');
       
-      const tutorApiUrl = 'https://building-station.com/wp-json/wp/v2/courses?_embed&per_page=100';
+      // Try Tutor LMS REST API first for complete course data
+      const tutorApiUrl = 'https://building-station.com/wp-json/tutor/v1/courses?per_page=100';
       
-      const response = await fetch(tutorApiUrl, {
+      let response = await fetch(tutorApiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -44,10 +45,26 @@ serve(async (req) => {
         },
       });
 
-      console.log('API Response Status:', response.status);
+      console.log('Tutor LMS API Response Status:', response.status);
+
+      // If Tutor API fails, fallback to WordPress REST API
+      if (!response.ok) {
+        console.log('Tutor API failed, trying WordPress REST API...');
+        const wpApiUrl = 'https://building-station.com/wp-json/wp/v2/courses?_embed&per_page=100';
+        
+        response = await fetch(wpApiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${credentials}`,
+          },
+        });
+        
+        console.log('WordPress API Response Status:', response.status);
+      }
 
       if (!response.ok) {
-        console.error('WordPress API error:', response.status);
+        console.error('All API attempts failed:', response.status);
         return new Response(
           JSON.stringify({ error: 'فشل في جلب الكورسات', code: 'TUTOR_API_ERROR' }),
           { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -55,10 +72,14 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      console.log(`Successfully fetched ${Array.isArray(data) ? data.length : 0} courses`);
+      
+      // Handle different response formats
+      const courses = data.data || data.courses || data;
+      console.log(`Successfully fetched ${Array.isArray(courses) ? courses.length : 0} courses`);
+      console.log('Sample course structure:', courses[0] ? JSON.stringify(courses[0]).substring(0, 500) : 'No courses');
 
       return new Response(
-        JSON.stringify(data),
+        JSON.stringify(courses),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
