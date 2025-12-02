@@ -17,14 +17,22 @@ export interface Course {
 
 export const fetchCourses = async (): Promise<Course[]> => {
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
+    // Call the edge function directly (public - no auth required for listing)
+    const response = await fetch(
+      'https://aegclwuugreshufvisax.supabase.co/functions/v1/tutor-lms-proxy?action=list',
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
     
-    // Call the edge function using Supabase client (automatically includes user JWT)
-    const { data, error } = await supabase.functions.invoke('tutor-lms-proxy');
-    
-    if (error) {
-      throw new Error('Failed to fetch courses: ' + error.message);
+    if (!response.ok) {
+      throw new Error('Failed to fetch courses: ' + response.statusText);
     }
+    
+    const data = await response.json();
     
     console.log('Courses fetched successfully:', data.length);
     console.log('Sample course data:', data[0] ? JSON.stringify(data[0]).substring(0, 300) : 'No courses');
