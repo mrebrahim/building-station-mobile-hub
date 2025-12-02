@@ -6,19 +6,76 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
-
-// Create Basic Auth header using environment variables
-function createAuthHeader() {
-  const consumerKey = Deno.env.get('WC_CONSUMER_KEY');
-  const consumerSecret = Deno.env.get('WC_CONSUMER_SECRET');
+// Create Tutor LMS Auth header
+function createTutorAuthHeader() {
+  const clientId = Deno.env.get('TUTOR_LMS_CLIENT_ID');
+  const secret = Deno.env.get('TUTOR_LMS_SECRET');
   
-  if (!consumerKey || !consumerSecret) {
-    throw new Error('WooCommerce credentials not configured');
+  if (!clientId || !secret) {
+    throw new Error('Tutor LMS credentials not configured');
   }
   
-  const credentials = btoa(`${consumerKey}:${consumerSecret}`);
+  const credentials = btoa(`${clientId}:${secret}`);
   return `Basic ${credentials}`;
+}
+
+// Enroll user in Tutor LMS
+async function enrollInTutorLMS(courseId: number, userEmail: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const authHeader = createTutorAuthHeader();
+    
+    // Try enrollment endpoint
+    const enrollUrl = `https://building-station.com/wp-json/tutor/v1/enrollments`;
+    
+    console.log(`📡 Calling Tutor LMS enrollment for course ${courseId}, user ${userEmail}`);
+    
+    const response = await fetch(enrollUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+      body: JSON.stringify({
+        course_id: courseId,
+        user_email: userEmail,
+      }),
+    });
+
+    console.log('Tutor LMS Response Status:', response.status);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Tutor LMS enrollment successful:', data);
+      return { success: true };
+    }
+
+    // Try alternative endpoint if first fails
+    const altEnrollUrl = `https://building-station.com/wp-json/tutor/v1/course-enrolled`;
+    const altResponse = await fetch(altEnrollUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+      body: JSON.stringify({
+        course_id: courseId,
+        student_email: userEmail,
+      }),
+    });
+
+    if (altResponse.ok) {
+      const data = await altResponse.json();
+      console.log('✅ Tutor LMS alt enrollment successful:', data);
+      return { success: true };
+    }
+
+    const errorText = await altResponse.text();
+    console.error('❌ Tutor LMS enrollment failed:', errorText);
+    return { success: false, error: errorText };
+  } catch (error) {
+    console.error('❌ Tutor LMS enrollment exception:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 serve(async (req) => {
@@ -175,11 +232,21 @@ serve(async (req) => {
             error: enrollError.message
           });
         } else {
-          console.log(`✅ Successfully enrolled in course ${item.course_id}`);
+          console.log(`✅ Successfully enrolled in course ${item.course_id} (Supabase)`);
+          
+          // Also enroll in Tutor LMS
+          const tutorResult = await enrollInTutorLMS(item.course_id, user.email!);
+          if (tutorResult.success) {
+            console.log(`✅ Successfully enrolled in Tutor LMS for course ${item.course_id}`);
+          } else {
+            console.warn(`⚠️ Tutor LMS enrollment failed (but Supabase succeeded):`, tutorResult.error);
+          }
+          
           enrollmentResults.push({ 
             success: true, 
             courseId: item.course_id,
-            orderId: orderId
+            orderId: orderId,
+            tutorLMS: tutorResult.success
           });
         }
       } catch (error) {

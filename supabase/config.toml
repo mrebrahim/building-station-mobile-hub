@@ -5,7 +5,7 @@ project_id = "aegclwuugreshufvisax"
 verify_jwt = true
 
 [functions.tutor-lms-proxy]
-verify_jwt = true
+verify_jwt = false
 
 [functions.enroll-courses]
 verify_jwt = true
