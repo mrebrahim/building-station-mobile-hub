@@ -38,7 +38,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
     console.log('Sample course data:', data[0] ? JSON.stringify(data[0]).substring(0, 300) : 'No courses');
     
     // Transform the data to match our interface
-    // WordPress REST API returns objects with 'rendered' properties
+    // Handles both Tutor LMS API and WordPress REST API response formats
     return (Array.isArray(data) ? data : []).map((course: any) => {
       const getRenderedText = (field: any) => {
         if (!field) return '';
@@ -54,44 +54,100 @@ export const fetchCourses = async (): Promise<Course[]> => {
       
       // Extract featured image from various possible locations
       const getFeaturedImage = () => {
-        // Priority 1: Check _embedded for featured image (most reliable)
+        // Tutor LMS API format
+        if (course.thumbnail_url) return course.thumbnail_url;
+        if (course.course_thumbnail) return course.course_thumbnail;
+        if (course.image) return course.image;
+        
+        // WordPress REST API format
         if (course._embedded?.['wp:featuredmedia']?.[0]?.source_url) {
           return course._embedded['wp:featuredmedia'][0].source_url;
         }
-        
-        // Priority 2: Check media_details for better quality
         if (course._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.large?.source_url) {
           return course._embedded['wp:featuredmedia'][0].media_details.sizes.large.source_url;
         }
         
-        // Priority 3: Check direct properties
+        // Direct properties
         if (course.featured_image_url) return course.featured_image_url;
         if (course.featured_media_url) return course.featured_media_url;
         if (course.thumbnail) return course.thumbnail;
         if (course.featured_image) return course.featured_image;
         
-        // Priority 4: Check meta
+        // Meta
         if (course.meta?.featured_image) return course.meta.featured_image;
         
-        // Fallback: return empty string
         return '';
       };
 
+      // Get title (handles both formats)
+      const getTitle = () => {
+        if (course.post_title) return course.post_title;
+        if (course.course_title) return course.course_title;
+        return stripHtmlTags(getRenderedText(course.title)) || 'بدون عنوان';
+      };
+
+      // Get lessons count (Tutor LMS specific fields)
+      const getLessonsCount = () => {
+        if (course.total_lessons) return parseInt(course.total_lessons) || 0;
+        if (course.lesson_count) return parseInt(course.lesson_count) || 0;
+        if (course.lessons_count) return parseInt(course.lessons_count) || 0;
+        if (course.course_content?.total_lessons) return parseInt(course.course_content.total_lessons) || 0;
+        if (course.meta?.lessons_count) return parseInt(course.meta.lessons_count) || 0;
+        return 0;
+      };
+
+      // Get course price
+      const getPrice = () => {
+        if (course.course_price) return course.course_price;
+        if (course.regular_price) return course.regular_price;
+        if (course.sale_price) return course.sale_price;
+        if (course.price) return course.price;
+        if (course.meta?.price) return course.meta.price;
+        return 0;
+      };
+
+      // Get course level
+      const getLevel = () => {
+        if (course.course_level) return course.course_level;
+        if (course.difficulty_level) return course.difficulty_level;
+        if (course.level) return course.level;
+        if (course.meta?.level) return course.meta.level;
+        return 'مبتدئ';
+      };
+
+      // Get author name
+      const getAuthorName = () => {
+        if (course.author?.display_name) return course.author.display_name;
+        if (course.instructor_name) return course.instructor_name;
+        if (course.author_name) return course.author_name;
+        if (course.meta?.author_name) return course.meta.author_name;
+        return 'غير محدد';
+      };
+
+      // Get course link
+      const getCourseLink = () => {
+        if (course.course_permalink) return course.course_permalink;
+        if (course.permalink) return course.permalink;
+        if (course.link) return course.link;
+        if (course.guid?.rendered) return course.guid.rendered;
+        return `https://building-station.com/courses/${course.slug || course.post_name || course.id}/`;
+      };
+
       const courseData = {
-        id: course.id || course.course_id || 0,
-        title: stripHtmlTags(getRenderedText(course.title)) || 'بدون عنوان',
+        id: course.id || course.course_id || course.ID || 0,
+        title: getTitle(),
         thumbnail: getFeaturedImage(),
-        excerpt: stripHtmlTags(getRenderedText(course.excerpt)) || stripHtmlTags(getRenderedText(course.content)).substring(0, 150),
-        price: course.price || course.meta?.price || 0,
-        level: course.level || course.meta?.level || 'مبتدئ',
-        lessons_count: course.lessons_count || course.meta?.lessons_count || 0,
-        author_name: course.author_name || course.meta?.author_name || 'غير محدد',
-        description: getRenderedText(course.content) || getRenderedText(course.description),
-        curriculum: course.curriculum || null,
-        category: course.category || course.meta?.category || 'عام',
-        product_id: course.product_id || course.meta?.product_id || course.id, // Use course ID as fallback
+        excerpt: stripHtmlTags(course.post_excerpt || course.short_description || getRenderedText(course.excerpt) || getRenderedText(course.content)).substring(0, 150),
+        price: getPrice(),
+        level: getLevel(),
+        lessons_count: getLessonsCount(),
+        author_name: getAuthorName(),
+        description: course.post_content || getRenderedText(course.content) || getRenderedText(course.description),
+        curriculum: course.curriculum || course.course_content || null,
+        category: course.category || course.course_category || course.meta?.category || 'عام',
+        product_id: course.product_id || course.wc_product_id || course.meta?.product_id || course.id,
         slug: course.slug || course.post_name || '',
-        link: course.link || `https://building-station.com/courses/${course.slug || course.id}/`,
+        link: getCourseLink(),
       };
       
       // Log sample course for debugging
@@ -101,7 +157,8 @@ export const fetchCourses = async (): Promise<Course[]> => {
           thumbnail: courseData.thumbnail,
           hasImage: !!courseData.thumbnail,
           price: courseData.price,
-          lessons: courseData.lessons_count
+          lessons: courseData.lessons_count,
+          link: courseData.link
         });
       }
       
