@@ -182,6 +182,13 @@ const Checkout = () => {
               console.log('✅ Enrollment successful:', data);
               if (data.enrolled > 0) {
                 toast.success(`✅ تم تسجيلك في ${data.enrolled} كورس بنجاح!`);
+                
+                // Open the first course directly in a new tab
+                const firstCourse = data.details?.find((d: any) => d.success && d.courseUrl);
+                if (firstCourse?.courseUrl) {
+                  console.log('🚀 Opening course:', firstCourse.courseUrl);
+                  window.open(firstCourse.courseUrl, '_blank');
+                }
               }
             }
           } catch (enrollError: any) {
