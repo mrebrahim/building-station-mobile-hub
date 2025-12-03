@@ -44,8 +44,14 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
   };
 
   const formatPrice = (price: string | number) => {
-    if (!price || price === 0 || price === '0') return 'مجاني';
+    if (!price || price === 0 || price === '0' || price === 'مجاني' || price === 'free') return 'مجاني';
+    if (typeof price === 'string' && price.includes('ر.س')) return price;
     return `${price} ر.س`;
+  };
+
+  const isFree = () => {
+    const price = course.price;
+    return !price || price === 0 || price === '0' || price === 'مجاني' || price === 'free';
   };
 
   const handleEnroll = async () => {
@@ -173,7 +179,7 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
             variant="default"
           >
             <ShoppingCart className="w-4 h-4 ml-2" />
-            {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
+            {isFree() ? 'سجل مجاناً' : 'اشترِ الآن'}
           </Button>
         )}
       </CardFooter>

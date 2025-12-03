@@ -43,7 +43,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
     console.log('Sample course data:', data[0] ? JSON.stringify(data[0]).substring(0, 300) : 'No courses');
     
     // Transform the data to match our interface
-    // Handles Tutor LMS API response format
+    // Handles WordPress REST API response format with _embedded data
     const coursesArray = Array.isArray(data) ? data : [];
     
     return coursesArray.map((course: any) => {
@@ -52,83 +52,75 @@ export const fetchCourses = async (): Promise<Course[]> => {
         return html.replace(/<[^>]*>/g, '').trim();
       };
 
-      // Get course level from additional_info
-      const getLevel = () => {
-        const levelArray = course.additional_info?.course_level;
-        if (Array.isArray(levelArray) && levelArray.length > 0) {
-          const level = levelArray[0];
-          // Translate to Arabic
-          const levelMap: Record<string, string> = {
-            'beginner': 'مبتدئ',
-            'intermediate': 'متوسط',
-            'advanced': 'متقدم',
-            'expert': 'خبير'
-          };
-          return levelMap[level?.toLowerCase()] || level || 'مبتدئ';
-        }
-        return 'مبتدئ';
+      // Get title - WordPress REST API uses title.rendered
+      const getTitle = () => {
+        if (course.title?.rendered) return stripHtmlTags(course.title.rendered);
+        if (course.post_title) return course.post_title;
+        return 'بدون عنوان';
       };
 
-      // Get price - check if course is free
-      const getPrice = () => {
-        const priceType = course.additional_info?.course_price_type;
-        if (Array.isArray(priceType) && priceType[0] === 'free') {
-          return 'مجاني';
+      // Get thumbnail from _embedded wp:featuredmedia
+      const getThumbnail = () => {
+        // WordPress REST API with _embed
+        const featuredMedia = course._embedded?.['wp:featuredmedia']?.[0];
+        if (featuredMedia?.source_url) return featuredMedia.source_url;
+        if (featuredMedia?.media_details?.sizes?.large?.source_url) {
+          return featuredMedia.media_details.sizes.large.source_url;
         }
-        if (course.price && course.price !== '') {
-          return course.price;
-        }
-        return 'مجاني';
+        // Tutor LMS format
+        if (course.thumbnail_url) return course.thumbnail_url;
+        return '';
       };
 
-      // Get author name
+      // Get excerpt
+      const getExcerpt = () => {
+        if (course.excerpt?.rendered) return stripHtmlTags(course.excerpt.rendered);
+        if (course.post_excerpt) return stripHtmlTags(course.post_excerpt);
+        return '';
+      };
+
+      // Get author name from _embedded
       const getAuthorName = () => {
+        const author = course._embedded?.author?.[0];
+        if (author?.name) return author.name;
         if (course.post_author?.display_name) return course.post_author.display_name;
         return 'غير محدد';
       };
 
-      // Get course duration
-      const getDuration = () => {
-        const duration = course.additional_info?.course_duration;
-        if (Array.isArray(duration) && duration[0]) {
-          const hours = duration[0].hours || '0';
-          const minutes = duration[0].minutes || '0';
-          return `${hours} ساعة ${minutes} دقيقة`;
-        }
-        return '';
-      };
-
-      // Get category
+      // Get category from _embedded wp:term
       const getCategory = () => {
-        if (Array.isArray(course.course_category) && course.course_category.length > 0) {
+        const terms = course._embedded?.['wp:term'];
+        if (Array.isArray(terms) && terms[0]?.[0]?.name) {
+          return terms[0][0].name;
+        }
+        if (Array.isArray(course.course_category) && course.course_category[0]?.name) {
           return course.course_category[0].name;
         }
         return 'عام';
       };
 
-      // Get course link
-      const getCourseLink = () => {
-        const slug = course.post_name || course.ID;
-        return `https://building-station.com/courses/${slug}/`;
+      // Get content
+      const getContent = () => {
+        if (course.content?.rendered) return course.content.rendered;
+        if (course.post_content) return course.post_content;
+        return '';
       };
 
       const courseData = {
-        id: course.ID || course.id || 0,
-        title: course.post_title || 'بدون عنوان',
-        thumbnail: course.thumbnail_url || '',
-        excerpt: stripHtmlTags(course.post_excerpt || '').substring(0, 150),
-        price: getPrice(),
-        level: getLevel(),
-        lessons_count: 0, // Will be fetched separately if needed
+        id: course.id || course.ID || 0,
+        title: getTitle(),
+        thumbnail: getThumbnail(),
+        excerpt: getExcerpt().substring(0, 150),
+        price: 'مجاني', // Default to free
+        level: 'مبتدئ',
+        lessons_count: 0,
         author_name: getAuthorName(),
-        description: course.post_content || '',
+        description: getContent(),
         curriculum: null,
         category: getCategory(),
-        product_id: course.ID || course.id,
-        slug: course.post_name || '',
-        link: getCourseLink(),
-        duration: getDuration(),
-        ratings: course.ratings || null,
+        product_id: course.id || course.ID,
+        slug: course.slug || course.post_name || '',
+        link: course.link || `https://building-station.com/courses/${course.slug || course.id}/`,
       };
       
       return courseData;
