@@ -73,8 +73,8 @@ serve(async (req) => {
 
       const data = await response.json();
       
-      // Handle different response formats
-      const courses = data.data || data.courses || data;
+      // Handle different response formats - Tutor LMS returns { posts: [...] }
+      const courses = data.posts || data.data || data.courses || (Array.isArray(data) ? data : []);
       console.log(`Successfully fetched ${Array.isArray(courses) ? courses.length : 0} courses`);
       console.log('Sample course structure:', courses[0] ? JSON.stringify(courses[0]).substring(0, 500) : 'No courses');
 
