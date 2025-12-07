@@ -17,10 +17,10 @@ serve(async (req) => {
     const action = url.searchParams.get('action') || 'list';
     
     // Get the secrets from environment
-    const clientId = Deno.env.get('TUTOR_LMS_CLIENT_ID');
-    const secret = Deno.env.get('TUTOR_LMS_SECRET');
+    const apiKey = Deno.env.get('TUTOR_LMS_CLIENT_ID');
+    const apiSecret = Deno.env.get('TUTOR_LMS_SECRET');
 
-    if (!clientId || !secret) {
+    if (!apiKey || !apiSecret) {
       console.error('Missing Tutor LMS credentials');
       return new Response(
         JSON.stringify({ error: 'خطأ في إعدادات الخادم' }),
@@ -28,31 +28,48 @@ serve(async (req) => {
       );
     }
 
-    const credentials = btoa(`${clientId}:${secret}`);
-
     // Action: List courses (PUBLIC - no auth required)
     if (action === 'list') {
-      console.log('Fetching courses list (public)...');
+      console.log('Fetching courses list from Tutor LMS Pro API...');
       
-      // Try Tutor LMS REST API first for complete course data
-      const tutorApiUrl = 'https://building-station.com/wp-json/tutor/v1/courses?per_page=100';
+      // Tutor LMS Pro REST API - uses api_key and api_secret as query params
+      const tutorApiUrl = `https://building-station.com/wp-json/tutor/v1/courses?api_key=${encodeURIComponent(apiKey)}&api_secret=${encodeURIComponent(apiSecret)}&per_page=100`;
+      
+      console.log('Trying Tutor LMS Pro API with query params auth...');
       
       let response = await fetch(tutorApiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${credentials}`,
         },
       });
 
       console.log('Tutor LMS API Response Status:', response.status);
 
-      // If Tutor API fails, fallback to WordPress REST API
+      // If query params auth fails, try header-based auth
       if (!response.ok) {
-        console.log('Tutor API failed, trying WordPress REST API...');
-        const wpApiUrl = 'https://building-station.com/wp-json/wp/v2/courses?_embed&per_page=100';
+        console.log('Query params auth failed, trying header auth...');
         
-        response = await fetch(wpApiUrl, {
+        const headerAuthUrl = 'https://building-station.com/wp-json/tutor/v1/courses?per_page=100';
+        response = await fetch(headerAuthUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-KEY': apiKey,
+            'X-API-SECRET': apiSecret,
+          },
+        });
+        
+        console.log('Header Auth Response Status:', response.status);
+      }
+
+      // If still fails, try Basic auth with api_key:api_secret
+      if (!response.ok) {
+        console.log('Header auth failed, trying Basic auth...');
+        
+        const credentials = btoa(`${apiKey}:${apiSecret}`);
+        const basicAuthUrl = 'https://building-station.com/wp-json/tutor/v1/courses?per_page=100';
+        response = await fetch(basicAuthUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -60,11 +77,27 @@ serve(async (req) => {
           },
         });
         
+        console.log('Basic Auth Response Status:', response.status);
+      }
+
+      // If Tutor API completely fails, fallback to WordPress REST API
+      if (!response.ok) {
+        console.log('All Tutor API auth methods failed, trying WordPress REST API...');
+        const wpApiUrl = 'https://building-station.com/wp-json/wp/v2/courses?_embed&per_page=100';
+        
+        response = await fetch(wpApiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
         console.log('WordPress API Response Status:', response.status);
       }
 
       if (!response.ok) {
-        console.error('All API attempts failed:', response.status);
+        const errorText = await response.text();
+        console.error('All API attempts failed:', response.status, errorText);
         return new Response(
           JSON.stringify({ error: 'فشل في جلب الكورسات', code: 'TUTOR_API_ERROR' }),
           { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -73,10 +106,13 @@ serve(async (req) => {
 
       const data = await response.json();
       
-      // Handle different response formats - Tutor LMS returns { posts: [...] }
+      // Handle different response formats - Tutor LMS returns { posts: [...] } or { data: [...] }
       const courses = data.posts || data.data || data.courses || (Array.isArray(data) ? data : []);
       console.log(`Successfully fetched ${Array.isArray(courses) ? courses.length : 0} courses`);
-      console.log('Sample course structure:', courses[0] ? JSON.stringify(courses[0]).substring(0, 500) : 'No courses');
+      
+      if (courses[0]) {
+        console.log('Sample course structure:', JSON.stringify(courses[0]).substring(0, 800));
+      }
 
       return new Response(
         JSON.stringify(courses),
@@ -121,14 +157,13 @@ serve(async (req) => {
 
       console.log(`Enrolling user ${user.email} in course ${course_id}...`);
 
-      // Enroll user in Tutor LMS via WordPress REST API
-      const enrollUrl = `https://building-station.com/wp-json/tutor/v1/enrollments`;
+      // Enroll user via Tutor LMS API with query params auth
+      const enrollUrl = `https://building-station.com/wp-json/tutor/v1/enrollments?api_key=${encodeURIComponent(apiKey)}&api_secret=${encodeURIComponent(apiSecret)}`;
       
       const enrollResponse = await fetch(enrollUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${credentials}`,
         },
         body: JSON.stringify({
           course_id: course_id,
@@ -142,7 +177,8 @@ serve(async (req) => {
         const errorText = await enrollResponse.text();
         console.error('Tutor LMS enrollment error:', errorText);
         
-        // Try alternative enrollment endpoint
+        // Try alternative enrollment with Basic auth
+        const credentials = btoa(`${apiKey}:${apiSecret}`);
         const altEnrollUrl = `https://building-station.com/wp-json/tutor/v1/course-enrolled`;
         const altResponse = await fetch(altEnrollUrl, {
           method: 'POST',
