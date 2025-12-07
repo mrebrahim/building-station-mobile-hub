@@ -8,6 +8,13 @@ const corsHeaders = {
 
 const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
 
+// Public endpoints that don't require authentication (read-only)
+const PUBLIC_ENDPOINTS = [
+  '/products/brands',
+  '/products/categories',
+  '/products',
+];
+
 // Create Basic Auth header using environment variables
 const createAuthHeader = () => {
   const consumerKey = Deno.env.get('WC_CONSUMER_KEY');
@@ -21,6 +28,12 @@ const createAuthHeader = () => {
   return `Basic ${credentials}`;
 };
 
+// Check if endpoint is public (read-only GET requests)
+const isPublicEndpoint = (endpoint: string, method: string): boolean => {
+  if (method !== 'GET') return false;
+  return PUBLIC_ENDPOINTS.some(pub => endpoint.startsWith(pub));
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -28,31 +41,7 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'غير مصرح' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      console.error('Authentication failed:', authError);
-      return new Response(
-        JSON.stringify({ error: 'غير مصرح' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Parse the request body to get the endpoint and parameters
+    // Parse the request body first to check if it's a public endpoint
     const requestBody = await req.json();
     const { endpoint, params, method = 'GET', body } = requestBody;
     
@@ -67,7 +56,36 @@ serve(async (req) => {
       );
     }
 
-    console.log('WooCommerce Proxy - User:', user.id, 'Endpoint:', endpoint);
+    const isPublic = isPublicEndpoint(endpoint, method);
+    console.log('WooCommerce Proxy - Endpoint:', endpoint, 'Method:', method, 'IsPublic:', isPublic);
+
+    // Only verify authentication for non-public endpoints
+    if (!isPublic) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'غير مصرح' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+      if (authError || !user) {
+        console.error('Authentication failed:', authError);
+        return new Response(
+          JSON.stringify({ error: 'غير مصرح' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('Authenticated user:', user.id);
+    }
 
     // Build the WooCommerce API URL
     let woocommerceUrl = `${WC_BASE_URL}${endpoint}`;
