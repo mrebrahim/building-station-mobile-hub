@@ -48,39 +48,83 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
     return `${price} ر.س`;
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isFree = () => {
+    const price = course?.price;
+    return !price || price === 0 || price === '0' || price === 'مجاني' || price === 'free';
+  };
+
   const handleEnroll = async () => {
+    if (!course) return;
+
     // Check if user is logged in
     if (!user) {
       toast.error('يجب تسجيل الدخول أولاً');
       onOpenChange(false);
-      navigate('/auth');
+      navigate('/auth?redirect=/all-courses');
       return;
     }
 
     if (isEnrolled) {
-      toast.info('أنت مسجل بالفعل في هذا الكورس');
+      // Open course directly
       onOpenChange(false);
-      navigate('/my-courses');
+      window.open(course.link || `https://building-station.com/courses/${course.slug || course.id}/`, '_blank');
       return;
     }
 
-    if (!course.product_id) {
-      toast.error('عذراً، لا يمكن التسجيل في هذا الكورس حالياً');
+    // For free courses, enroll directly
+    if (isFree()) {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('enroll-courses', {
+          body: { 
+            items: [{
+              id: course.product_id || course.id,
+              name: course.title,
+              price: 0,
+              quantity: 1,
+              type: 'course',
+              course_id: course.id
+            }],
+            billing: { email: user.email },
+            orderId: null
+          }
+        });
+
+        if (error) {
+          console.error('Enrollment error:', error);
+          toast.error('حدث خطأ في التسجيل');
+          return;
+        }
+
+        if (data?.success) {
+          toast.success('تم تسجيلك في الكورس بنجاح!');
+          setIsEnrolled(true);
+          onOpenChange(false);
+          const courseUrl = course.link || `https://building-station.com/courses/${course.slug || course.id}/`;
+          window.open(courseUrl, '_blank');
+        } else {
+          toast.error(data?.message || 'حدث خطأ في التسجيل');
+        }
+      } catch (err) {
+        console.error('Enrollment exception:', err);
+        toast.error('حدث خطأ في التسجيل');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
-    // Get current cart from localStorage
+    // For paid courses, add to cart
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    // Check if course already in cart
     const existingItem = cart.find((item: any) => item.id === course.product_id);
     
     if (existingItem) {
       toast.info('الكورس موجود بالفعل في السلة');
     } else {
-      // Add course to cart as a product
       cart.push({
-        id: course.product_id,
+        id: course.product_id || course.id,
         name: course.title,
         price: course.price,
         quantity: 1,
@@ -90,10 +134,10 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
       });
       
       localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
       toast.success('تم إضافة الكورس إلى السلة');
     }
     
-    // Close dialog and navigate to cart
     onOpenChange(false);
     navigate('/cart');
   };
@@ -135,30 +179,26 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
           </div>
           
           <div className="flex items-center justify-between">
-            {isEnrolled ? (
-              <a
-                href={course.link || `https://building-station.com/courses/${course.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button 
-                  size="lg"
-                  className="gap-2"
-                >
+            <Button 
+              onClick={handleEnroll}
+              size="lg"
+              className="gap-2"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="animate-spin">⏳</span>
+              ) : isEnrolled ? (
+                <>
                   <GraduationCap className="w-5 h-5" />
                   ابدأ الدراسة
-                </Button>
-              </a>
-            ) : (
-              <Button 
-                onClick={handleEnroll}
-                size="lg"
-                className="gap-2"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {course.price && course.price !== 0 ? 'اشترِ الآن' : 'سجل مجاناً'}
-              </Button>
-            )}
+                </>
+              ) : (
+                <>
+                  {isFree() ? <GraduationCap className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
+                  {isFree() ? 'سجل مجاناً' : 'اشترِ الآن'}
+                </>
+              )}
+            </Button>
             <div className="text-3xl font-bold text-primary">
               {formatPrice(course.price)}
             </div>
