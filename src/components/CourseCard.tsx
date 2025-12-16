@@ -16,6 +16,7 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -53,8 +54,6 @@ const CourseCard = ({ course, onDetailsClick }: CourseCardProps) => {
     const price = course.price;
     return !price || price === 0 || price === '0' || price === 'مجاني' || price === 'free';
   };
-
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleEnroll = async () => {
     // Check if user is logged in
