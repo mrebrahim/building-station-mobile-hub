@@ -18,6 +18,7 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     if (!course) return;
@@ -40,20 +41,18 @@ const CourseDetailsDialog = ({ course, open, onOpenChange }: CourseDetailsDialog
       }
     });
   }, [course]);
-  
-  if (!course) return null;
 
   const formatPrice = (price: string | number) => {
     if (!price || price === 0 || price === '0') return 'مجاني';
     return `${price} ر.س`;
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const isFree = () => {
     const price = course?.price;
     return !price || price === 0 || price === '0' || price === 'مجاني' || price === 'free';
   };
+  
+  if (!course) return null;
 
   const handleEnroll = async () => {
     if (!course) return;
