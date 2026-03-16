@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,58 +7,58 @@ const corsHeaders = {
 
 const WC_BASE_URL = 'https://building-station.com/wp-json/wc/v3';
 
-// Public endpoints that don't require authentication (read-only)
+// ✅ Endpoints مسموح بيها بدون Login
 const PUBLIC_ENDPOINTS = [
   '/products/brands',
   '/products/categories',
   '/products',
+  '/orders',  // ✅ إنشاء أوردر مسموح بدون login
+  '/coupons',
 ];
 
-// Create Basic Auth header using environment variables
 const createAuthHeader = () => {
   const consumerKey = Deno.env.get('WC_CONSUMER_KEY');
   const consumerSecret = Deno.env.get('WC_CONSUMER_SECRET');
-  
   if (!consumerKey || !consumerSecret) {
     throw new Error('WooCommerce credentials not configured');
   }
-  
   const credentials = btoa(`${consumerKey}:${consumerSecret}`);
   return `Basic ${credentials}`;
 };
 
-// Check if endpoint is public (read-only GET requests)
 const isPublicEndpoint = (endpoint: string, method: string): boolean => {
-  if (method !== 'GET') return false;
-  return PUBLIC_ENDPOINTS.some(pub => endpoint.startsWith(pub));
+  // GET requests للمنتجات والفئات - عامة
+  if (method === 'GET') {
+    const getPublic = ['/products', '/products/categories', '/products/brands'];
+    if (getPublic.some(pub => endpoint.startsWith(pub))) return true;
+  }
+  // POST /orders - إنشاء أوردر مسموح بدون login
+  if (method === 'POST' && endpoint.startsWith('/orders')) return true;
+  // GET /orders - لو محتاج تتبع أوردر
+  if (method === 'GET' && endpoint.startsWith('/orders')) return true;
+  return false;
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Parse the request body first to check if it's a public endpoint
     const requestBody = await req.json();
     const { endpoint, params, method = 'GET', body } = requestBody;
-    
+
     if (!endpoint) {
-      console.error('Missing endpoint in request body');
       return new Response(
-        JSON.stringify({ error: 'معامل نقطة النهاية مفقود' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'Missing endpoint' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const isPublic = isPublicEndpoint(endpoint, method);
-    console.log('WooCommerce Proxy - Endpoint:', endpoint, 'Method:', method, 'IsPublic:', isPublic);
+    console.log(`WooCommerce Proxy - ${method} ${endpoint} - Public: ${isPublic}`);
 
-    // Only verify authentication for non-public endpoints
+    // ✅ لو مش public - تحقق من Login
     if (!isPublic) {
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
@@ -68,77 +67,50 @@ serve(async (req) => {
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_ANON_KEY')!,
-        { global: { headers: { Authorization: authHeader } } }
-      );
-
-      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-      if (authError || !user) {
-        console.error('Authentication failed:', authError);
-        return new Response(
-          JSON.stringify({ error: 'غير مصرح' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      console.log('Authenticated user:', user.id);
     }
 
-    // Build the WooCommerce API URL
+    // بناء الـ URL
     let woocommerceUrl = `${WC_BASE_URL}${endpoint}`;
-    if (params) {
-      woocommerceUrl += `?${params}`;
-    }
+    if (params) woocommerceUrl += `?${params}`;
 
-    // Make the request to WooCommerce API
+    // الطلب لـ WooCommerce
     const response = await fetch(woocommerceUrl, {
       method: method,
       headers: {
         'Authorization': createAuthHeader(),
         'Content-Type': 'application/json',
-        'User-Agent': 'Supabase-Edge-Function'
+        'User-Agent': 'BuildingStation-App/1.0'
       },
       body: method !== 'GET' && body ? JSON.stringify(body) : undefined,
     });
 
-    console.log('WooCommerce API response status:', response.status);
+    console.log(`WooCommerce response: ${response.status}`);
 
-    if (!response.ok) {
-      console.error('WooCommerce API error:', response.status, response.statusText);
-      
-      return new Response(
-        JSON.stringify({ 
-          error: 'فشل طلب WooCommerce',
-          code: 'WC_API_ERROR'
-        }),
-        { 
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { error: responseText };
     }
 
-    const data = await response.json();
-    console.log('WooCommerce API success - data count:', Array.isArray(data) ? data.length : 'single object');
+    if (!response.ok) {
+      console.error('WooCommerce error:', data);
+      return new Response(
+        JSON.stringify({ error: 'فشل طلب WooCommerce', details: data }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('WooCommerce Proxy error:', error);
+    console.error('Proxy error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'حدث خطأ في الخادم',
-        code: 'INTERNAL_ERROR'
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ error: 'حدث خطأ في الخادم', message: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
