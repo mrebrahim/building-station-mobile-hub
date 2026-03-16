@@ -8,13 +8,17 @@ import ContactInformation from "@/components/checkout/ContactInformation";
 import DeliveryInformation from "@/components/checkout/DeliveryInformation";
 import OrderSummaryDetail from "@/components/checkout/OrderSummaryDetail";
 import CheckoutFooter from "@/components/checkout/CheckoutFooter";
+import PaymentMethod from "@/components/checkout/PaymentMethod";
 import { wooCommerceService } from "@/services/woocommerce/index";
 import { supabase } from "@/integrations/supabase/client";
 import { checkoutSchema } from "@/lib/validation";
 
+const WOOCOMMERCE_URL = "https://building-station.com";
+
 const Checkout = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("qicard");
   const [formData, setFormData] = useState({
     email: "",
     country: "العراق",
@@ -36,15 +40,10 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    // Load cart items from localStorage for checkout
     const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
     const subtotal = savedCart.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-    
-    // Check if cart contains courses and user is not authenticated
     const hasCourses = savedCart.some((item: any) => item.type === 'course');
-    
     if (hasCourses) {
-      // Check authentication status
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
           toast.error('يجب تسجيل الدخول لشراء الكورسات');
@@ -53,15 +52,7 @@ const Checkout = () => {
         }
       });
     }
-    
-    setOrderSummary({
-      items: savedCart,
-      subtotal: subtotal,
-      shipping: 0,
-      discount: 0,
-      appliedCoupon: "",
-      total: subtotal
-    });
+    setOrderSummary({ items: savedCart, subtotal, shipping: 0, discount: 0, appliedCoupon: "", total: subtotal });
   }, []);
 
   const handleInputChange = (field: string, value: string) => {
@@ -69,39 +60,36 @@ const Checkout = () => {
   };
 
   const handleDiscountApply = (discountAmount: number, couponCode: string) => {
-    const newTotal = orderSummary.subtotal - discountAmount;
     setOrderSummary(prev => ({
       ...prev,
       discount: discountAmount,
       appliedCoupon: couponCode,
-      total: newTotal
+      total: prev.subtotal - discountAmount
     }));
   };
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    
-    // Validate input using zod schema
+
     const validation = checkoutSchema.safeParse(formData);
-    
     if (!validation.success) {
-      const error = validation.error.errors[0];
-      toast.error(error.message);
+      toast.error(validation.error.errors[0].message);
       return;
     }
-    
+
     if (orderSummary.items.length === 0) {
       toast.error("السلة فارغة");
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      // Prepare order data for WooCommerce
+      const isQiCard = paymentMethod === "qicard";
+
       const orderData = {
-        payment_method: "cod",
-        payment_method_title: "الدفع عند الاستلام",
+        payment_method: isQiCard ? "qicard" : "cod",
+        payment_method_title: isQiCard ? "QiCard" : "الدفع عند الاستلام",
         set_paid: false,
         billing: {
           first_name: formData.firstName,
@@ -128,35 +116,39 @@ const Checkout = () => {
           quantity: item.quantity
         }))
       };
-      
-      console.log("Creating WooCommerce order:", orderData);
-      
-      // Create order through WooCommerce API
+
       const response = await wooCommerceService.createOrder(orderData);
-      
-      console.log("WooCommerce order response:", response);
-      
+
       if (response && response.id) {
-        toast.success("تم إنشاء الطلب بنجاح!");
-        
-        // Check if there are any courses in the order and enroll the user
-        const hasCourses = orderSummary.items.some(item => item.type === 'course');
-        
-        if (hasCourses) {
-          // Verify user is authenticated before enrolling
-          const { data: { session } } = await supabase.auth.getSession();
+        // ✅ لو QiCard - وجّه لصفحة الدفع
+        if (isQiCard) {
+          toast.success("تم إنشاء الطلب! جاري التوجه لصفحة الدفع...");
+          localStorage.removeItem('cart');
+          window.dispatchEvent(new Event('cartUpdated'));
           
+          // رابط الدفع من WooCommerce
+          const paymentUrl = response.payment_url || 
+            `${WOOCOMMERCE_URL}/checkout/order-pay/${response.id}/?pay_for_order=true&key=${response.order_key}`;
+          
+          // فتح صفحة الدفع في نفس النافذة (جوا WebView)
+          window.location.href = paymentUrl;
+          return;
+        }
+
+        // ✅ لو COD - كمّل العملية العادية
+        toast.success("تم إنشاء الطلب بنجاح!");
+        const hasCourses = orderSummary.items.some(item => item.type === 'course');
+
+        if (hasCourses) {
+          const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
             toast.error('يجب تسجيل الدخول لشراء الكورسات');
             navigate('/auth?redirect=/checkout');
             return;
           }
-
-          console.log('📚 Enrolling user in courses...');
-          
           try {
             const { data, error } = await supabase.functions.invoke('enroll-courses', {
-              body: { 
+              body: {
                 items: orderSummary.items.map(item => ({
                   ...item,
                   type: item.type || 'product',
@@ -174,50 +166,22 @@ const Checkout = () => {
                 orderId: response.id
               }
             });
-            
-            if (error) {
-              console.error('❌ Enrollment error:', error);
-              toast.error('تم إنشاء الطلب لكن حدث خطأ في تسجيل الكورسات');
-            } else if (data?.success) {
-              console.log('✅ Enrollment successful:', data);
-              if (data.enrolled > 0) {
-                toast.success(`✅ تم تسجيلك في ${data.enrolled} كورس بنجاح!`);
-                
-                // Open the first course directly in a new tab
-                const firstCourse = data.details?.find((d: any) => d.success && d.courseUrl);
-                if (firstCourse?.courseUrl) {
-                  console.log('🚀 Opening course:', firstCourse.courseUrl);
-                  window.open(firstCourse.courseUrl, '_blank');
-                }
-              }
+            if (data?.success && data.enrolled > 0) {
+              toast.success(`✅ تم تسجيلك في ${data.enrolled} كورس بنجاح!`);
+              const firstCourse = data.details?.find((d: any) => d.success && d.courseUrl);
+              if (firstCourse?.courseUrl) window.open(firstCourse.courseUrl, '_blank');
             }
-          } catch (enrollError: any) {
-            console.error('❌ Course enrollment exception:', enrollError);
-            if (enrollError?.message?.includes('AUTH_REQUIRED')) {
-              toast.error('انتهت جلستك. يرجى تسجيل الدخول مرة أخرى');
-              navigate('/auth?redirect=/checkout');
-            } else {
-              toast.error('حدث خطأ في تسجيل الكورسات');
-            }
+          } catch (e) {
+            toast.error('حدث خطأ في تسجيل الكورسات');
           }
         }
-        
-        // Clear cart
+
         localStorage.removeItem('cart');
         window.dispatchEvent(new Event('cartUpdated'));
-        
-        // Redirect to success page or order confirmation
-        setTimeout(() => {
-          if (hasCourses) {
-            navigate('/my-courses');
-          } else {
-            navigate('/');
-          }
-        }, 2000);
+        setTimeout(() => navigate(hasCourses ? '/my-courses' : '/'), 2000);
       } else {
         toast.error("حدث خطأ في إنشاء الطلب");
       }
-      
     } catch (error) {
       console.error("Order creation error:", error);
       toast.error("حدث خطأ في إنشاء الطلب. يرجى المحاولة مرة أخرى");
@@ -229,28 +193,27 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-gray-50 rtl">
       <CheckoutHeader />
-
       <div className="p-4 pb-6">
         <OrderSummaryCard total={orderSummary.total} />
-
-        <ContactInformation 
+        <ContactInformation
           email={formData.email}
           onEmailChange={(email) => handleInputChange("email", email)}
         />
-
-        <DeliveryInformation 
+        <DeliveryInformation
           formData={formData}
           onInputChange={handleInputChange}
         />
-
-        <OrderSummaryDetail 
+        <PaymentMethod
+          selectedMethod={paymentMethod}
+          onMethodChange={setPaymentMethod}
+        />
+        <OrderSummaryDetail
           items={orderSummary.items}
           subtotal={orderSummary.subtotal}
           total={orderSummary.total}
           discount={orderSummary.discount}
           onDiscountApply={handleDiscountApply}
         />
-
         <CheckoutFooter onSubmit={handleSubmit} isSubmitting={isSubmitting} />
       </div>
     </div>
