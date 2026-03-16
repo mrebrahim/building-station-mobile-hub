@@ -131,7 +131,7 @@ const Checkout = () => {
             `${WOOCOMMERCE_URL}/checkout/order-pay/${response.id}/?pay_for_order=true&key=${response.order_key}`;
           
           // فتح صفحة الدفع في نفس النافذة (جوا WebView)
-          window.location.href = paymentUrl;
+          window.open(paymentUrl, "_blank");
           return;
         }
 
