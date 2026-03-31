@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { authSchema } from "@/lib/validation";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,7 +13,10 @@ const Auth = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
   });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -24,20 +26,37 @@ const Auth = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const createWooCommerceCustomer = async (email: string, firstName: string, lastName: string, phone: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-woocommerce-customer', {
+        body: { email, firstName, lastName, phone }
+      });
+      if (error) {
+        console.error('WooCommerce customer error:', error);
+      } else {
+        console.log('✅ WooCommerce customer:', data);
+      }
+    } catch (err) {
+      console.error('WooCommerce customer exception:', err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
 
-    // Validate input using zod schema
-    const validation = authSchema.safeParse({
-      email: formData.email,
-      password: formData.password,
-      confirmPassword: isLogin ? undefined : formData.confirmPassword,
-    });
+    if (!formData.email || !formData.password) {
+      toast.error('يرجى ملء جميع الحقول المطلوبة');
+      return;
+    }
 
-    if (!validation.success) {
-      const error = validation.error.errors[0];
-      toast.error(error.message);
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      toast.error('كلمتا المرور غير متطابقتين');
+      return;
+    }
+
+    if (!isLogin && formData.password.length < 6) {
+      toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
       return;
     }
 
@@ -45,61 +64,58 @@ const Auth = () => {
 
     try {
       if (isLogin) {
+        // ✅ تسجيل الدخول
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
         if (error) {
-          toast.error("خطأ في تسجيل الدخول: " + error.message);
+          toast.error('خطأ في تسجيل الدخول: ' + error.message);
           return;
         }
 
-        toast.success("تم تسجيل الدخول بنجاح!");
+        // ✅ لما يسجّل دخول - نتأكد إن الـ customer موجود في WooCommerce
+        createWooCommerceCustomer(formData.email, formData.firstName, formData.lastName, formData.phone);
+
+        toast.success('تم تسجيل الدخول بنجاح!');
         navigate(redirectTo);
+
       } else {
-        const redirectUrl = `${window.location.origin}/`;
-        
+        // ✅ إنشاء حساب جديد
         const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
-            emailRedirectTo: redirectUrl
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              phone: formData.phone,
+            }
           }
         });
 
         if (error) {
-          toast.error("خطأ في إنشاء الحساب: " + error.message);
+          toast.error('خطأ في إنشاء الحساب: ' + error.message);
           return;
         }
 
-        // Create WooCommerce customer account after successful signup
+        // ✅ إنشاء customer في WooCommerce
         if (data.user) {
-          try {
-            const { error: wcError } = await supabase.functions.invoke('create-woocommerce-customer', {
-              body: { 
-                email: formData.email,
-                firstName: '',
-                lastName: ''
-              }
-            });
-
-            if (wcError) {
-              console.error('Error creating WooCommerce customer:', wcError);
-              // Don't fail the signup if WooCommerce customer creation fails
-            } else {
-              console.log('WooCommerce customer created successfully');
-            }
-          } catch (wcError) {
-            console.error('Error creating WooCommerce customer:', wcError);
-          }
+          await createWooCommerceCustomer(
+            formData.email,
+            formData.firstName,
+            formData.lastName,
+            formData.phone
+          );
         }
 
-        toast.success("تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني");
+        toast.success('تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني');
       }
     } catch (error) {
-      console.error("Auth error:", error);
-      toast.error("حدث خطأ غير متوقع");
+      console.error('Auth error:', error);
+      toast.error('حدث خطأ غير متوقع');
     } finally {
       setLoading(false);
     }
@@ -112,7 +128,7 @@ const Auth = () => {
         <div className="flex items-center justify-between p-4">
           <div className="w-6"></div>
           <h1 className="text-lg font-medium">
-            {isLogin ? "تسجيل الدخول" : "إنشاء حساب جديد"}
+            {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
           </h1>
           <Link to="/profile">
             <ArrowLeft className="w-6 h-6 text-gray-700" />
@@ -121,45 +137,79 @@ const Auth = () => {
       </header>
 
       <div className="p-6">
-        {/* Welcome Section */}
+        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4 rounded-full overflow-hidden bg-white shadow-lg">
-            <img 
-              src="/lovable-uploads/affbbcc3-4fa8-45ef-839a-50be03b7a27c.png" 
-              alt="Building Station Logo" 
+            <img
+              src="/lovable-uploads/affbbcc3-4fa8-45ef-839a-50be03b7a27c.png"
+              alt="Building Station"
               className="w-20 h-20 object-contain"
             />
           </div>
           <h2 className="text-2xl font-bold mb-2">
-            {isLogin ? "مرحباً بعودتك!" : "انضم إلينا"}
+            {isLogin ? 'مرحباً بعودتك!' : 'انضم إلينا'}
           </h2>
           <p className="text-gray-600">
-            {isLogin 
-              ? "سجل دخولك للاستمتاع بجميع المزايا" 
-              : "أنشئ حسابك الآن واستمتع بتجربة تسوق مميزة"
-            }
+            {isLogin
+              ? 'سجل دخولك للاستمتاع بجميع المزايا'
+              : 'أنشئ حسابك الآن واستمتع بتجربة تسوق مميزة'}
           </p>
         </div>
 
-        {/* Auth Form */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+
+          {/* الاسم الأول والأخير - فقط عند التسجيل */}
+          {!isLogin && (
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                type="text"
+                placeholder="الاسم الأول"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                className="h-12 text-right"
+                dir="rtl"
+              />
+              <Input
+                type="text"
+                placeholder="اسم العائلة"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                className="h-12 text-right"
+                dir="rtl"
+              />
+            </div>
+          )}
+
+          {/* البريد الإلكتروني */}
+          <Input
+            type="email"
+            placeholder="البريد الإلكتروني"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            className="w-full h-12 text-right"
+            dir="rtl"
+          />
+
+          {/* رقم الهاتف - فقط عند التسجيل */}
+          {!isLogin && (
             <Input
-              type="email"
-              placeholder="البريد الإلكتروني"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
+              type="tel"
+              placeholder="رقم الهاتف (اختياري)"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
               className="w-full h-12 text-right"
               dir="rtl"
             />
-          </div>
+          )}
 
+          {/* كلمة المرور */}
           <div className="relative">
             <Input
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               placeholder="كلمة المرور"
               value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
+              onChange={(e) => handleInputChange('password', e.target.value)}
               className="w-full h-12 text-right pr-12"
               dir="rtl"
             />
@@ -168,50 +218,42 @@ const Auth = () => {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute left-3 top-1/2 transform -translate-y-1/2"
             >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5 text-gray-400" />
-              ) : (
-                <Eye className="w-5 h-5 text-gray-400" />
-              )}
+              {showPassword ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
             </button>
           </div>
 
+          {/* تأكيد كلمة المرور */}
           {!isLogin && (
-            <div>
-              <Input
-                type="password"
-                placeholder="تأكيد كلمة المرور"
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                className="w-full h-12 text-right"
-                dir="rtl"
-              />
-            </div>
+            <Input
+              type="password"
+              placeholder="تأكيد كلمة المرور"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              className="w-full h-12 text-right"
+              dir="rtl"
+            />
           )}
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="w-full h-12 bg-red-500 hover:bg-red-600 text-white font-bold text-base"
           >
-            {loading 
-              ? "جاري المعالجة..." 
-              : isLogin 
-                ? "تسجيل الدخول" 
-                : "إنشاء الحساب"
-            }
+            {loading
+              ? 'جاري المعالجة...'
+              : isLogin ? 'تسجيل الدخول' : 'إنشاء الحساب'}
           </Button>
         </form>
 
-        {/* Toggle Auth Mode */}
+        {/* Toggle */}
         <div className="text-center mt-6">
           <p className="text-gray-600">
-            {isLogin ? "ليس لديك حساب؟" : "لديك حساب بالفعل؟"}
+            {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-medium mr-2 hover:underline"
+              className="text-red-500 font-medium mr-2 hover:underline"
             >
-              {isLogin ? "إنشاء حساب جديد" : "تسجيل الدخول"}
+              {isLogin ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
             </button>
           </p>
         </div>
