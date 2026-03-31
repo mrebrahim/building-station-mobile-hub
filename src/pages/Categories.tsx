@@ -1,36 +1,56 @@
 import { useQuery } from "@tanstack/react-query";
-import { wooCommerceService } from "@/services/woocommerce";
 import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
 
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  parent: number;
+  count: number;
+  image?: { src: string; alt: string };
+}
+
+// ✅ جلب Categories مباشرة من الـ Vercel Proxy
+const fetchAllCategories = async (): Promise<Category[]> => {
+  const url = `/api/woocommerce?endpoint=products/categories&per_page=100&orderby=name&order=asc`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch categories');
+  const data = await res.json();
+  return data.map((cat: any) => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    parent: cat.parent || 0,
+    count: cat.count || 0,
+    image: cat.image ? { src: cat.image.src, alt: cat.image.alt || cat.name } : undefined,
+  }));
+};
+
 const Categories = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
 
-  const { data: apiCategories = [], isLoading } = useQuery({
-    queryKey: ['all-categories'],
-    queryFn: () => wooCommerceService.getCategories({ per_page: 100 }),
-    retry: 3,
-    retryDelay: 1000,
+  const { data: allCategories = [], isLoading, error } = useQuery({
+    queryKey: ['wc-categories-direct'],
+    queryFn: fetchAllCategories,
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 
-  const parentCategories = apiCategories
-    .filter(cat => (!cat.parent || cat.parent === 0) && cat.count > 0)
+  const parentCategories = allCategories
+    .filter(cat => cat.parent === 0)
     .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
   const getSubCategories = (parentId: number) =>
-    apiCategories.filter(cat => cat.parent === parentId && cat.count > 0);
+    allCategories.filter(cat => cat.parent === parentId);
 
   const toggleCategory = (id: number) => {
     setExpandedCategories(prev => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
@@ -40,7 +60,10 @@ const Categories = () => {
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center"
+          >
             <ArrowRight className="w-5 h-5 text-gray-600" />
           </button>
           <h1 className="text-lg font-bold text-gray-800">التصنيفات</h1>
@@ -48,15 +71,24 @@ const Categories = () => {
         </div>
       </header>
 
-      {/* Categories List */}
+      {/* Content */}
       <div className="bg-white mt-2">
         {isLoading ? (
           <div className="divide-y divide-gray-100">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="px-4 py-4 animate-pulse">
-                <div className="h-5 bg-gray-200 rounded w-1/3 ml-auto" />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="px-4 py-4 animate-pulse flex justify-end">
+                <div className="h-5 bg-gray-200 rounded w-1/3" />
               </div>
             ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-500">حدث خطأ في تحميل التصنيفات</p>
+            <p className="text-gray-400 text-sm mt-2">{String(error)}</p>
+          </div>
+        ) : parentCategories.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">لا توجد تصنيفات متاحة</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -67,7 +99,7 @@ const Categories = () => {
 
               return (
                 <div key={category.id}>
-                  {/* Parent Category Row */}
+                  {/* Parent Row */}
                   <div
                     className="flex items-center justify-between px-4 py-4 bg-white active:bg-gray-50 transition-colors cursor-pointer"
                     onClick={() => {
@@ -87,21 +119,13 @@ const Categories = () => {
                       )}
                     </div>
 
-                    {/* Right: name + image */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-medium text-gray-800">{category.name}</span>
-                      {category.image?.src && (
-                        <img
-                          src={category.image.src}
-                          alt={category.name}
-                          className="w-8 h-8 rounded-lg object-cover"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      )}
-                    </div>
+                    {/* Right: name */}
+                    <span className="text-base font-medium text-gray-800">
+                      {category.name}
+                    </span>
                   </div>
 
-                  {/* Sub Categories Accordion */}
+                  {/* Sub Categories */}
                   {hasSubCategories && isExpanded && (
                     <div className="bg-gray-50">
                       {subCategories.map((sub) => (
