@@ -1,70 +1,74 @@
 import { Category, CategoryParams } from './types';
 
-// ✅ Vercel Serverless Function - بتتجنب CORS وبتستخدم الـ env variables من Vercel
-const fetchFromProxy = async (endpoint: string, params: Record<string, any> = {}): Promise<any> => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', endpoint);
-  
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) url.searchParams.append(k, String(v));
-  });
+const SUPABASE_URL = 'https://cyyeydswwbbqhehbhhbw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5eWV5ZHN3d2JicWhlaGJoaGJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTMxODQsImV4cCI6MjA4OTI2OTE4NH0.6qt4-bYdMAmIdnWqJ1x4AWeYnj_DFO0Ugn34ROTnRwc';
 
-  console.log('Fetching from proxy:', url.toString());
-  
-  const res = await fetch(url.toString());
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(`Proxy error: ${res.status} - ${JSON.stringify(error)}`);
-  }
+const supabaseFetch = async (query: string): Promise<any[]> => {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${query}`, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    }
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
   return res.json();
 };
+
+const transform = (cat: any): Category => ({
+  id: cat.id,
+  name: cat.name,
+  slug: cat.slug || '',
+  description: cat.description || '',
+  image: cat.image_url ? { id: 0, src: cat.image_url, alt: cat.image_alt || cat.name } : undefined,
+  count: cat.product_count || 0,
+  parent: cat.parent_id || 0,
+});
 
 export class CategoriesService {
   async getCategories(params: CategoryParams = {}): Promise<Category[]> {
     try {
-      console.log('Fetching categories from WooCommerce via Vercel proxy...');
+      let query = 'wc_categories?order=name.asc';
+      if (params.parent !== undefined) query += `&parent_id=eq.${params.parent}`;
+      if (params.per_page) query += `&limit=${params.per_page}`;
 
-      const data = await fetchFromProxy('products/categories', {
-        per_page: params.per_page || 100,
-        page: params.page || 1,
-        ...(params.parent !== undefined && { parent: params.parent }),
-        orderby: params.orderby || 'name',
-        order: params.order || 'asc',
-        hide_empty: 'true',
-      });
-
-      const categories: Category[] = data.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug,
-        description: cat.description || '',
-        image: cat.image ? {
-          id: cat.image.id,
-          src: cat.image.src,
-          alt: cat.image.alt || cat.name
-        } : undefined,
-        count: cat.count || 0,
-        parent: cat.parent || 0,
-      }));
-
-      console.log('✅ Categories fetched:', categories.length);
-      return categories;
+      const data = await supabaseFetch(query);
+      console.log(`✅ Supabase categories: ${data.length}`);
+      return data.map(transform);
     } catch (error) {
-      console.error('❌ Failed to fetch categories:', error);
+      console.error('Supabase failed, using proxy:', error);
+      return this.getFromProxy(params);
+    }
+  }
+
+  private async getFromProxy(params: CategoryParams = {}): Promise<Category[]> {
+    try {
+      const url = new URL('/api/woocommerce', window.location.origin);
+      url.searchParams.append('endpoint', 'products/categories');
+      url.searchParams.append('per_page', String(params.per_page || 100));
+      if (params.parent !== undefined) url.searchParams.append('parent', String(params.parent));
+      url.searchParams.append('orderby', 'name');
+      url.searchParams.append('order', 'asc');
+      const res = await fetch(url.toString());
+      const data = await res.json();
+      return data.map((cat: any) => ({
+        id: cat.id, name: cat.name, slug: cat.slug,
+        description: cat.description || '',
+        image: cat.image ? { id: cat.image.id, src: cat.image.src, alt: cat.image.alt || cat.name } : undefined,
+        count: cat.count || 0, parent: cat.parent || 0,
+      }));
+    } catch (error) {
+      console.error('Proxy also failed:', error);
       return [];
     }
   }
 
   async getFeaturedCategories(limit: number = 12): Promise<Category[]> {
     try {
+      const data = await supabaseFetch(`wc_categories?parent_id=eq.0&order=menu_order.asc&limit=${limit}`);
+      return data.map(transform);
+    } catch {
       const all = await this.getCategories({ per_page: 100 });
-      return all
-        .filter(cat => cat.parent === 0 && cat.count > 0)
-        .sort((a, b) => b.count - a.count)
-        .slice(0, limit);
-    } catch (error) {
-      console.error('Failed to fetch featured categories:', error);
-      return [];
+      return all.filter(c => c.parent === 0).slice(0, limit);
     }
   }
 
@@ -79,24 +83,9 @@ export class CategoriesService {
 
   async getCategoryById(id: number): Promise<Category | null> {
     try {
-      const data = await fetchFromProxy(`products/categories/${id}`);
-      return {
-        id: data.id,
-        name: data.name,
-        slug: data.slug,
-        description: data.description || '',
-        image: data.image ? {
-          id: data.image.id,
-          src: data.image.src,
-          alt: data.image.alt || data.name
-        } : undefined,
-        count: data.count || 0,
-        parent: data.parent || 0,
-      };
-    } catch (error) {
-      console.error('Failed to fetch category:', error);
-      return null;
-    }
+      const data = await supabaseFetch(`wc_categories?id=eq.${id}&limit=1`);
+      return data.length ? transform(data[0]) : null;
+    } catch { return null; }
   }
 }
 
