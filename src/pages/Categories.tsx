@@ -1,183 +1,134 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { wooCommerceService } from "@/services/woocommerce";
-import { ArrowRight, Search, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import EnhancedCategoryCard from "@/components/EnhancedCategoryCard";
-import CategoryBreadcrumb from "@/components/CategoryBreadcrumb";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Category } from "@/services/woocommerce/types";
+import BottomNavigation from "@/components/BottomNavigation";
 
 const Categories = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedParent, setSelectedParent] = useState<number | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [sortBy, setSortBy] = useState<'name' | 'count'>('name');
+  const navigate = useNavigate();
 
-  // Fetch all categories from WooCommerce API
-  const { data: apiCategories = [], isLoading, error } = useQuery({
+  const { data: apiCategories = [], isLoading } = useQuery({
     queryKey: ['all-categories'],
     queryFn: () => wooCommerceService.getCategories({ per_page: 100 }),
     retry: 3,
     retryDelay: 1000,
   });
 
-  // Transform and filter categories
-  const displayCategories = apiCategories
-    .filter(cat => {
-      const hasProducts = cat.count > 0;
-      const matchesSearch = cat.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const isParentCategory = !cat.parent || cat.parent === 0;
-      return hasProducts && matchesSearch && isParentCategory;
-    })
-    .map(apiCat => ({
-      id: apiCat.id,
-      name: apiCat.name,
-      slug: apiCat.slug,
-      description: apiCat.description || '',
-      count: apiCat.count,
-      image: apiCat.image || undefined,
-      parent: apiCat.parent || 0
-    }))
-    .sort((a, b) => {
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name, 'ar');
+  const parentCategories = apiCategories
+    .filter(cat => (!cat.parent || cat.parent === 0) && cat.count > 0)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+  const getSubCategories = (parentId: number) =>
+    apiCategories.filter(cat => cat.parent === parentId && cat.count > 0);
+
+  const toggleCategory = (id: number) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        return b.count - a.count;
+        next.add(id);
       }
+      return next;
     });
-
-
-  const breadcrumbItems = [
-    { name: "جميع الفئات", path: "/categories" }
-  ];
-
-  console.log('All API Categories:', apiCategories);
-  console.log('Display Categories:', displayCategories);
-  console.log('Categories Error:', error);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 rtl">
+    <div className="min-h-screen bg-gray-50 rtl pb-20">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex items-center justify-between p-3">
-          <div className="w-10"></div>
-          <h1 className="text-lg font-bold text-gray-800">جميع الفئات</h1>
-          <Link to="/">
-            <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full hover:bg-gray-100">
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
+        <div className="flex items-center justify-between px-4 py-3">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center">
+            <ArrowRight className="w-5 h-5 text-gray-600" />
+          </button>
+          <h1 className="text-lg font-bold text-gray-800">التصنيفات</h1>
+          <div className="w-9" />
         </div>
       </header>
 
-      {/* Breadcrumb Navigation */}
-      <CategoryBreadcrumb items={breadcrumbItems} />
-
-      {/* Search and Filter Section */}
-      <div className="px-3 py-3 bg-white border-b border-gray-100">
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="البحث في الفئات..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-9 text-sm h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="w-9 h-9 border-gray-200 hover:bg-gray-50"
-            onClick={() => setShowFilterMenu(!showFilterMenu)}
-          >
-            <Filter className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        {/* Filter Menu */}
-        {showFilterMenu && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs font-medium text-gray-700 mb-2">ترتيب حسب:</p>
-            <div className="flex gap-2">
-              <Button
-                variant={sortBy === 'name' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => setSortBy('name')}
-              >
-                الاسم
-              </Button>
-              <Button
-                variant={sortBy === 'count' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => setSortBy('count')}
-              >
-                عدد المنتجات
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Categories Content */}
-      <div className="px-3 py-4 pb-20">
+      {/* Categories List */}
+      <div className="bg-white mt-2">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-2.5">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl p-2.5 text-center shadow-sm animate-pulse border border-gray-100">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-1.5"></div>
-                <div className="h-2.5 bg-gray-200 rounded mb-1"></div>
-                <div className="h-2 bg-gray-200 rounded w-2/3 mx-auto"></div>
+          <div className="divide-y divide-gray-100">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="px-4 py-4 animate-pulse">
+                <div className="h-5 bg-gray-200 rounded w-1/3 ml-auto" />
               </div>
             ))}
           </div>
-        ) : displayCategories.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2.5">
-            {displayCategories.map((category) => (
-              <EnhancedCategoryCard 
-                key={category.id} 
-                category={category}
-              />
-            ))}
-          </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              {searchTerm ? 'لا توجد فئات تطابق البحث' : 'لا توجد فئات متاحة'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {searchTerm 
-                ? 'جرب البحث بكلمات مختلفة أو امسح مربع البحث لعرض جميع الفئات' 
-                : 'يرجى المحاولة لاحقاً أو التحقق من الاتصال بالإنترنت'
-              }
-            </p>
-            <div className="flex gap-3 justify-center">
-              {searchTerm && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSearchTerm('')}
-                  className="text-blue-500 border-blue-500 hover:bg-blue-50"
-                >
-                  مسح البحث
-                </Button>
-              )}
-              <Link to="/">
-                <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50">
-                  العودة للرئيسية
-                </Button>
-              </Link>
-            </div>
+          <div className="divide-y divide-gray-100">
+            {parentCategories.map((category) => {
+              const subCategories = getSubCategories(category.id);
+              const isExpanded = expandedCategories.has(category.id);
+              const hasSubCategories = subCategories.length > 0;
+
+              return (
+                <div key={category.id}>
+                  {/* Parent Category Row */}
+                  <div
+                    className="flex items-center justify-between px-4 py-4 bg-white active:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      if (hasSubCategories) {
+                        toggleCategory(category.id);
+                      } else {
+                        navigate(`/category/${category.id}`);
+                      }
+                    }}
+                  >
+                    {/* Left: chevron */}
+                    <div className="text-gray-400 w-6 flex justify-center">
+                      {hasSubCategories && (
+                        isExpanded
+                          ? <ChevronUp className="w-5 h-5" />
+                          : <ChevronDown className="w-5 h-5" />
+                      )}
+                    </div>
+
+                    {/* Right: name + image */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-medium text-gray-800">{category.name}</span>
+                      {category.image?.src && (
+                        <img
+                          src={category.image.src}
+                          alt={category.name}
+                          className="w-8 h-8 rounded-lg object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sub Categories Accordion */}
+                  {hasSubCategories && isExpanded && (
+                    <div className="bg-gray-50">
+                      {subCategories.map((sub) => (
+                        <Link
+                          key={sub.id}
+                          to={`/category/${sub.id}`}
+                          className="flex items-center justify-end px-8 py-3 border-b border-gray-100 last:border-b-0 active:bg-gray-100 transition-colors"
+                        >
+                          <span className="text-sm text-gray-700">{sub.name}</span>
+                        </Link>
+                      ))}
+                      <Link
+                        to={`/category/${category.id}`}
+                        className="flex items-center justify-end px-8 py-3 active:bg-gray-100 transition-colors"
+                      >
+                        <span className="text-sm text-red-500 font-medium">عرض الكل ›</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      <BottomNavigation />
     </div>
   );
 };
