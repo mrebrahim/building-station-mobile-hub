@@ -5,7 +5,6 @@ import Banner from "@/components/Banner";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import InfiniteProductsSection from "@/components/InfiniteProductsSection";
-import CoursesSection from "@/components/CoursesSection";
 import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
 
@@ -21,7 +20,6 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 rtl font-sans">
       <Header />
       <Banner />
-      <CoursesSection />
       <BrandsSection />
       {featuredProducts.length > 0 && (
         <ProductsSection
