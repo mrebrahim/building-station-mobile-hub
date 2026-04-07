@@ -5,7 +5,6 @@ import Banner from "@/components/Banner";
 import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import InfiniteProductsSection from "@/components/InfiniteProductsSection";
-import PartnersSection from "@/components/PartnersSection";
 import BottomNavigation from "@/components/BottomNavigation";
 
 const Index = () => {
@@ -29,7 +28,6 @@ const Index = () => {
         />
       )}
       <InfiniteProductsSection title="كتالوج المنتجات" />
-      <PartnersSection />
       <BottomNavigation />
     </div>
   );

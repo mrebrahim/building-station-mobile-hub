@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -13,7 +13,6 @@ interface Category {
   image?: { src: string; alt: string };
 }
 
-// ✅ جلب Categories مباشرة من الـ Vercel Proxy
 const fetchAllCategories = async (): Promise<Category[]> => {
   const url = `/api/woocommerce?endpoint=products/categories&per_page=100&orderby=name&order=asc`;
   const res = await fetch(url);
@@ -33,7 +32,7 @@ const Categories = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
 
-  const { data: allCategories = [], isLoading, error } = useQuery({
+  const { data: allCategories = [], isLoading } = useQuery({
     queryKey: ['wc-categories-direct'],
     queryFn: fetchAllCategories,
     staleTime: 1000 * 60 * 5,
@@ -56,14 +55,11 @@ const Categories = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 rtl pb-20">
+    <div className="min-h-screen bg-gray-50 rtl pb-24">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center"
-          >
+          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center">
             <ArrowRight className="w-5 h-5 text-gray-600" />
           </button>
           <h1 className="text-lg font-bold text-gray-800">التصنيفات</h1>
@@ -71,7 +67,7 @@ const Categories = () => {
         </div>
       </header>
 
-      {/* Content */}
+      {/* Categories List */}
       <div className="bg-white mt-2">
         {isLoading ? (
           <div className="divide-y divide-gray-100">
@@ -80,15 +76,6 @@ const Categories = () => {
                 <div className="h-5 bg-gray-200 rounded w-1/3" />
               </div>
             ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-red-500">حدث خطأ في تحميل التصنيفات</p>
-            <p className="text-gray-400 text-sm mt-2">{String(error)}</p>
-          </div>
-        ) : parentCategories.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">لا توجد تصنيفات متاحة</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -99,7 +86,6 @@ const Categories = () => {
 
               return (
                 <div key={category.id}>
-                  {/* Parent Row */}
                   <div
                     className="flex items-center justify-between px-4 py-4 bg-white active:bg-gray-50 transition-colors cursor-pointer"
                     onClick={() => {
@@ -110,37 +96,24 @@ const Categories = () => {
                       }
                     }}
                   >
-                    {/* Left: chevron */}
                     <div className="text-gray-400 w-6 flex justify-center">
                       {hasSubCategories && (
-                        isExpanded
-                          ? <ChevronUp className="w-5 h-5" />
-                          : <ChevronDown className="w-5 h-5" />
+                        isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />
                       )}
                     </div>
-
-                    {/* Right: name */}
-                    <span className="text-base font-medium text-gray-800">
-                      {category.name}
-                    </span>
+                    <span className="text-base font-medium text-gray-800">{category.name}</span>
                   </div>
 
-                  {/* Sub Categories */}
                   {hasSubCategories && isExpanded && (
                     <div className="bg-gray-50">
                       {subCategories.map((sub) => (
-                        <Link
-                          key={sub.id}
-                          to={`/category/${sub.id}`}
-                          className="flex items-center justify-end px-8 py-3 border-b border-gray-100 last:border-b-0 active:bg-gray-100 transition-colors"
-                        >
+                        <Link key={sub.id} to={`/category/${sub.id}`}
+                          className="flex items-center justify-end px-8 py-3 border-b border-gray-100 last:border-b-0 active:bg-gray-100 transition-colors">
                           <span className="text-sm text-gray-700">{sub.name}</span>
                         </Link>
                       ))}
-                      <Link
-                        to={`/category/${category.id}`}
-                        className="flex items-center justify-end px-8 py-3 active:bg-gray-100 transition-colors"
-                      >
+                      <Link to={`/category/${category.id}`}
+                        className="flex items-center justify-end px-8 py-3 active:bg-gray-100 transition-colors">
                         <span className="text-sm text-red-500 font-medium">عرض الكل ›</span>
                       </Link>
                     </div>
@@ -150,6 +123,21 @@ const Categories = () => {
             })}
           </div>
         )}
+      </div>
+
+      {/* ✅ زرار شركاؤنا في نهاية الصفحة */}
+      <div className="px-4 mt-4">
+        <Link to="/partners">
+          <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-4 shadow-sm active:bg-gray-50 transition-colors">
+            <ArrowRight className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <span className="text-base font-medium text-gray-800">شركاؤنا</span>
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <Users className="w-5 h-5 text-blue-500" />
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
       <BottomNavigation />
