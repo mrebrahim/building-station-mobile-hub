@@ -1,18 +1,13 @@
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { endpoint, ...params } = req.query;
+  const { endpoint, namespace = 'wc/v3', ...params } = req.query;
 
-  if (!endpoint) {
-    return res.status(400).json({ error: 'Missing endpoint' });
-  }
+  if (!endpoint) return res.status(400).json({ error: 'Missing endpoint' });
 
   const consumerKey = process.env.VITE_WC_CONSUMER_KEY;
   const consumerSecret = process.env.VITE_WC_CONSUMER_SECRET;
@@ -22,21 +17,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const url = new URL(`https://building-station.com/wp-json/wc/v3/${endpoint}`);
-    
-    // Add query params
+    // ✅ يدعم wc/v3 و wp/v2 و أي namespace تاني
+    const url = new URL(`https://building-station.com/wp-json/${namespace}/${endpoint}`);
+
     Object.entries(params).forEach(([key, value]) => {
-      if (value) url.searchParams.append(key, value);
+      if (value !== undefined && value !== '') url.searchParams.append(key, value);
     });
 
-    // Handle POST body
     let body = undefined;
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && req.body) {
       body = JSON.stringify(req.body);
     }
 
     const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-    
+
     const response = await fetch(url.toString(), {
       method: req.method,
       headers: {
@@ -47,14 +41,11 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    
-    if (!response.ok) {
-      return res.status(response.status).json(data);
-    }
 
+    if (!response.ok) return res.status(response.status).json(data);
     return res.status(200).json(data);
   } catch (error) {
-    console.error('WooCommerce proxy error:', error);
+    console.error('Proxy error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
