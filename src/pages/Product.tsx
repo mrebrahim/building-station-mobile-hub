@@ -1,206 +1,128 @@
-import { ArrowLeft, Heart, Share, Plus, Minus } from "lucide-react";
+import { ArrowRight, Share2, Heart, Plus, Minus, ShoppingCart, Zap, Barcode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { wooCommerceService } from "@/services/woocommerce";
+import BottomNavigation from "@/components/BottomNavigation";
 
 const Product = () => {
   const { id } = useParams();
   const { toast } = useToast();
-  
+  const navigate = useNavigate();
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showFullDescription, setShowFullDescription] = useState(false);
 
-  // Fetch product data from WooCommerce
-  const { data: product, isLoading: productLoading, error } = useQuery({
+  const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
     queryFn: () => wooCommerceService.getProduct(parseInt(id!)),
     enabled: !!id,
   });
 
-  // Fetch related products
   const { data: relatedProducts = [] } = useQuery({
     queryKey: ['related-products', product?.categories?.[0]?.id],
-    queryFn: () => wooCommerceService.getProducts({ 
-      per_page: 4, 
+    queryFn: () => wooCommerceService.getProducts({
+      per_page: 4,
       category: product?.categories?.[0]?.id?.toString(),
       exclude: [product?.id]
     }),
     enabled: !!product?.categories?.[0]?.id,
   });
 
-  // Check if product is in favorites when product loads
   useEffect(() => {
     if (product) {
       const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      const isProductFavorite = favorites.some((fav: any) => fav.id === product.id);
-      setIsFavorite(isProductFavorite);
+      setIsFavorite(favorites.some((fav: any) => fav.id === product.id));
     }
   }, [product]);
 
   const toggleFavorite = () => {
     if (!product) return;
-    
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    
     if (isFavorite) {
-      // Remove from favorites
-      const updatedFavorites = favorites.filter((fav: any) => fav.id !== product.id);
-      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      localStorage.setItem('favorites', JSON.stringify(favorites.filter((f: any) => f.id !== product.id)));
       setIsFavorite(false);
-      window.dispatchEvent(new Event('favoritesUpdated'));
-      toast({
-        title: "تم الحذف",
-        description: `تم حذف ${product.name} من المفضلة`,
-      });
     } else {
-      // Add to favorites
-      const favoriteProduct = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images?.[0]?.src || '',
-        brand: product.categories?.[0]?.name || 'غير محدد'
-      };
-      favorites.push(favoriteProduct);
+      favorites.push({ id: product.id, name: product.name, price: product.price, image: product.images?.[0]?.src || '' });
       localStorage.setItem('favorites', JSON.stringify(favorites));
       setIsFavorite(true);
-      window.dispatchEvent(new Event('favoritesUpdated'));
-      toast({
-        title: "تم الإضافة",
-        description: `تم إضافة ${product.name} إلى المفضلة`,
-      });
     }
+    window.dispatchEvent(new Event('favoritesUpdated'));
   };
 
-  if (productLoading) {
+  const handleAddToCart = () => {
+    if (!product) return;
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const idx = cart.findIndex((i: any) => i.id === product.id);
+    if (idx >= 0) {
+      cart[idx].quantity += quantity;
+    } else {
+      cart.push({
+        id: product.id,
+        name: product.name,
+        price: parseFloat(product.price) || 0,
+        quantity,
+        image: product.images?.[0]?.src || ''
+      });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
+    toast({ title: "✅ تم إضافة المنتج للسلة", description: product.name });
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    navigate('/checkout');
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 rtl">
-        <header className="bg-white shadow-sm sticky top-0 z-50">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-gray-200 px-3 py-1 rounded-full text-sm animate-pulse h-8 w-20"></div>
-            </div>
-            <Link to="/">
-              <ArrowLeft className="w-6 h-6 text-gray-700" />
-            </Link>
-          </div>
-        </header>
-        <div className="p-4">
-          <div className="bg-white rounded-xl p-4 animate-pulse">
-            <div className="h-80 bg-gray-200 rounded-lg mb-4"></div>
-            <div className="h-6 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 rtl flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 rtl flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mb-6">
-            <span className="text-8xl">📦</span>
-          </div>
-          <h2 className="text-2xl font-bold mb-3 text-gray-800">المنتج غير موجود</h2>
-          <p className="text-gray-600 mb-6">عذراً، لا يمكن العثور على هذا المنتج</p>
-          <Link to="/">
-            <Button className="bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-3 text-lg rounded-lg">
-              العودة للرئيسية
-            </Button>
-          </Link>
-        </div>
+      <div className="min-h-screen bg-gray-50 rtl flex flex-col items-center justify-center p-4">
+        <span className="text-6xl mb-4">📦</span>
+        <h2 className="text-xl font-bold mb-2 text-gray-800">المنتج غير موجود</h2>
+        <Link to="/"><Button className="mt-4 bg-red-500 text-white">العودة للرئيسية</Button></Link>
       </div>
     );
   }
 
-  const handleAddToCart = () => {
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingItemIndex = existingCart.findIndex((item: any) => item.id === product.id);
-    
-    if (existingItemIndex >= 0) {
-      existingCart[existingItemIndex].quantity += quantity;
-    } else {
-      existingCart.push({
-        id: product.id,
-        name: product.name,
-        brand: product.categories?.[0]?.name || 'غير محدد',
-        price: parseFloat(product.price) || 0,
-        quantity: quantity,
-        image: product.images?.[0]?.src || ''
-      });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(existingCart));
-    
-    // Dispatch custom event to update cart count
-    window.dispatchEvent(new Event('cartUpdated'));
-    
-    toast({
-      title: "تم إضافة المنتج",
-      description: `تم إضافة ${product.name} إلى السلة`,
-    });
-  };
-
-  const handleQuantityChange = (change: number) => {
-    setQuantity(Math.max(1, quantity + change));
-  };
-
-  const productPrice = parseFloat(product.price) || 0;
-  const productImages = product.images || [];
+  const price = parseFloat(product.price) || 0;
+  const images = product.images || [];
+  const sku = product.sku || `#${product.id}`;
+  const inStock = product.stock_status === 'instock';
 
   return (
     <div className="min-h-screen bg-gray-50 rtl">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
-            <Share className="w-6 h-6 text-gray-600" />
-            <Heart 
-              className={`w-6 h-6 cursor-pointer ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-600'}`}
-              onClick={toggleFavorite}
-            />
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={handleAddToCart}
-              disabled={product.stock_status !== 'instock'}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md"
-            >
-              <Plus className="w-4 h-4 ml-1" />
-              إضافة للسلة
-            </Button>
-            <Link to="/cart" className="bg-black text-white px-4 py-2 rounded-full text-sm font-medium">
-              عرض السلة
-            </Link>
-          </div>
-          
-          <Link to="/">
-            <ArrowLeft className="w-6 h-6 text-gray-700" />
-          </Link>
+        <div className="flex items-center justify-between px-4 py-3">
+          <Share2 className="w-5 h-5 text-gray-500 cursor-pointer" />
+          <h1 className="text-base font-bold text-gray-800 flex-1 text-center px-2 truncate"
+            dangerouslySetInnerHTML={{ __html: product.name }} />
+          <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center">
+            <ArrowRight className="w-5 h-5 text-gray-600" />
+          </button>
         </div>
       </header>
 
-      <div className="pb-20">
-        {/* Image Carousel */}
+      <div className="pb-32">
+        {/* Image */}
         <div className="relative bg-white">
-          <div className="relative h-80 overflow-hidden">
-            {productImages.length > 0 ? (
-              <img 
-                src={productImages[currentImageIndex]?.src} 
-                alt={productImages[currentImageIndex]?.alt || product.name}
+          <div className="relative h-72 overflow-hidden">
+            {images.length > 0 ? (
+              <img
+                src={images[currentImageIndex]?.src}
+                alt={images[currentImageIndex]?.alt || product.name}
                 className="w-full h-full object-contain"
               />
             ) : (
@@ -208,154 +130,102 @@ const Product = () => {
                 <span className="text-6xl">📦</span>
               </div>
             )}
-            
-            {/* Image navigation */}
-            {productImages.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                {productImages.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`w-3 h-3 rounded-full ${index === currentImageIndex ? 'bg-black' : 'bg-gray-300'}`}
-                    onClick={() => setCurrentImageIndex(index)}
-                  />
+
+            {/* Favorite button */}
+            <button
+              onClick={toggleFavorite}
+              className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center"
+            >
+              <Heart className={`w-5 h-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
+            </button>
+
+            {/* Image dots */}
+            {images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5">
+                {images.map((_, i) => (
+                  <button key={i} onClick={() => setCurrentImageIndex(i)}
+                    className={`w-2 h-2 rounded-full ${i === currentImageIndex ? 'bg-red-500' : 'bg-gray-300'}`} />
                 ))}
-              </div>
-            )}
-            
-            {/* Image counter */}
-            {productImages.length > 1 && (
-              <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-sm">
-                {currentImageIndex + 1}/{productImages.length}
               </div>
             )}
           </div>
         </div>
 
         {/* Product Info */}
-        <div className="bg-white p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">رمز المنتج: {product.sku || product.id}</span>
-            {product.categories && product.categories.length > 0 && (
-              <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                {product.categories[0].name}
-              </span>
+        <div className="bg-white px-4 pt-4 pb-2 mt-2">
+          {/* Name */}
+          <h2 className="text-lg font-bold text-gray-800 text-right mb-1"
+            dangerouslySetInnerHTML={{ __html: product.name }} />
+
+          {/* Price */}
+          <div className="flex items-center justify-end gap-2 mb-4">
+            {product.regular_price && product.regular_price !== product.price && (
+              <span className="text-sm text-gray-400 line-through">{parseFloat(product.regular_price).toLocaleString()}</span>
             )}
-          </div>
-          
-          <h1 className="text-xl font-bold mb-2" dangerouslySetInnerHTML={{ __html: product.name }}></h1>
-          
-          <div className="flex items-center justify-between mb-4">
-            <span className={`text-sm font-medium ${product.stock_status === 'instock' ? 'text-green-600' : 'text-red-600'}`}>
-              {product.stock_status === 'instock' ? 'متوفر' : 'غير متوفر'}
+            <span className="text-xl font-bold text-cyan-500">
+              {price > 0 ? `${price.toLocaleString()} IQD` : 'اتصل للسعر'}
             </span>
-            <span className="text-2xl font-bold">
-              {productPrice > 0 ? `IQD ${productPrice.toLocaleString()}` : 'اتصل للسعر'}
+            <span className="text-sm text-gray-500">السعر شامل الضريبة</span>
+          </div>
+
+          {/* Quantity */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2">
+              <button onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                <Minus className="w-4 h-4 text-gray-600" />
+              </button>
+              <span className="text-lg font-bold min-w-[2rem] text-center">{quantity}</span>
+              <button onClick={() => setQuantity(q => q + 1)}
+                className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                <Plus className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+            <span className="text-base font-bold text-gray-700">الكمية</span>
+          </div>
+
+          {/* SKU / Model Number */}
+          <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 mb-4">
+            <span className="text-base font-medium text-gray-700">{sku}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">رقم الموديل</span>
+              <Barcode className="w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+
+          {/* Stock status */}
+          <div className="flex justify-end mb-2">
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${inStock ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+              {inStock ? '● متوفر' : '● غير متوفر'}
             </span>
           </div>
 
-          {/* Quantity Controls and Add to Cart */}
-          <div className="flex items-center gap-3 mb-4">
-            {/* Quantity Controls */}
-            <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
-                className="h-8 w-8 rounded-lg hover:bg-white"
-              >
-                <Minus className="w-4 h-4" />
-              </Button>
-              <span className="text-base font-bold px-2 min-w-[2rem] text-center">{quantity}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleQuantityChange(1)}
-                className="h-8 w-8 rounded-lg hover:bg-white"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            {/* Add to Cart Button */}
-            <Button 
-              className="flex-1 bg-black hover:bg-gray-800 text-white h-12 text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
-              onClick={handleAddToCart}
-              disabled={product.stock_status !== 'instock'}
-            >
-              <div className="flex items-center justify-between w-full">
-                <span>
-                  {product.stock_status === 'instock' ? 'إضافة للسلة' : 'غير متوفر'}
-                </span>
-                <span>
-                  {productPrice > 0 ? `${(productPrice * quantity).toLocaleString()} IQD` : 'السعر'}
-                </span>
-              </div>
-            </Button>
-          </div>
-          
+          {/* Short Description */}
           {product.short_description && (
-            <div 
-              className="text-gray-600 text-sm leading-relaxed mb-2"
-              dangerouslySetInnerHTML={{ __html: product.short_description }}
-            />
-          )}
-          
-          {product.description && !showFullDescription && (
-            <button 
-              onClick={() => setShowFullDescription(true)}
-              className="text-blue-500 text-sm mt-2 hover:text-blue-600 transition-colors"
-            >
-              اقرأ المزيد
-            </button>
+            <div className="text-sm text-gray-600 leading-relaxed text-right mt-2"
+              dangerouslySetInnerHTML={{ __html: product.short_description }} />
           )}
         </div>
 
-        {/* Full Description */}
-        {product.description && showFullDescription && (
-          <div className="bg-white p-4 mb-4">
-            <h3 className="text-lg font-bold mb-4">الوصف التفصيلي</h3>
-            <div 
-              className="text-gray-600 text-sm leading-relaxed mb-4"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
-            <button 
-              onClick={() => setShowFullDescription(false)}
-              className="text-blue-500 text-sm hover:text-blue-600 transition-colors"
-            >
-              إخفاء
-            </button>
-          </div>
-        )}
-
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div className="bg-white p-4">
-            <h3 className="text-lg font-bold mb-4 text-center">منتجات ذات صلة</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {relatedProducts.slice(0, 4).map((relatedProduct) => (
-                <Link key={relatedProduct.id} to={`/product/${relatedProduct.id}`}>
-                  <div className="border border-gray-200 rounded-xl p-3">
-                    <div className="relative mb-3">
-                      {relatedProduct.images && relatedProduct.images.length > 0 ? (
-                        <img 
-                          src={relatedProduct.images[0].src} 
-                          alt={relatedProduct.images[0].alt || relatedProduct.name}
-                          className="w-full h-32 object-contain" 
-                        />
-                      ) : (
-                        <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
-                          <span className="text-3xl">📦</span>
-                        </div>
-                      )}
-                      <Heart className="absolute top-2 right-2 w-5 h-5 text-gray-400" />
-                    </div>
-                    <p className="text-xs text-gray-500 mb-1">
-                      {relatedProduct.categories?.[0]?.name || 'غير محدد'}
-                    </p>
-                    <h4 className="text-sm font-medium mb-2" dangerouslySetInnerHTML={{ __html: relatedProduct.name }}></h4>
-                    <p className="text-lg font-bold">
-                      {relatedProduct.price ? `IQD ${parseInt(relatedProduct.price).toLocaleString()}` : 'اتصل للسعر'}
+          <div className="bg-white p-4 mt-2">
+            <h3 className="text-base font-bold mb-3 text-right text-gray-800">منتجات ذات صلة</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {relatedProducts.slice(0, 4).map((rel) => (
+                <Link key={rel.id} to={`/product/${rel.id}`}>
+                  <div className="border border-gray-100 rounded-xl p-3 bg-white">
+                    {rel.images?.[0] ? (
+                      <img src={rel.images[0].src} alt={rel.name} className="w-full h-28 object-contain mb-2" />
+                    ) : (
+                      <div className="w-full h-28 bg-gray-100 rounded-lg mb-2 flex items-center justify-center">
+                        <span className="text-2xl">📦</span>
+                      </div>
+                    )}
+                    <p className="text-xs font-medium text-gray-700 truncate text-right"
+                      dangerouslySetInnerHTML={{ __html: rel.name }} />
+                    <p className="text-sm font-bold text-cyan-500 text-right mt-1">
+                      {rel.price ? `${parseFloat(rel.price).toLocaleString()} IQD` : 'اتصل'}
                     </p>
                   </div>
                 </Link>
@@ -365,6 +235,30 @@ const Product = () => {
         )}
       </div>
 
+      {/* ✅ Bottom Action Buttons - زرارين ثابتين في الأسفل */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-50">
+        <div className="flex gap-3">
+          {/* اشتري الآن */}
+          <Button
+            onClick={handleBuyNow}
+            disabled={!inStock}
+            className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-base rounded-xl flex items-center justify-center gap-2"
+          >
+            <Zap className="w-5 h-5" />
+            اشتري الآن
+          </Button>
+
+          {/* إضافة للسلة */}
+          <Button
+            onClick={handleAddToCart}
+            disabled={!inStock}
+            className="flex-1 h-12 bg-white hover:bg-gray-50 text-cyan-500 font-bold text-base rounded-xl border-2 border-cyan-500 flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            إضافة للسلة
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
