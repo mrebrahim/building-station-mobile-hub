@@ -26,6 +26,7 @@ import NoInternet from "./pages/NoInternet";
 import NotFound from "./pages/NotFound";
 import Partners from "./pages/Partners";
 import Orders from "./pages/Orders";
+import Courses from "./pages/Courses";
 import SyncDashboard from "./pages/SyncDashboard";
 import AboutUs from "./pages/AboutUs";
 import MyCourses from "./pages/MyCourses";
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/no-internet" element={<NoInternet />} />
             <Route path="/partners" element={<Partners />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/courses" element={<Courses />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

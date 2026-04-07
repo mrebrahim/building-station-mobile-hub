@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, ChevronUp, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, Users, GraduationCap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -125,7 +125,22 @@ const Categories = () => {
         )}
       </div>
 
-      {/* ✅ زرار شركاؤنا في نهاية الصفحة */}
+      {/* ✅ زرار كورساتنا */}
+      <div className="px-4 mt-4">
+        <Link to="/courses">
+          <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-4 shadow-sm active:bg-gray-50 transition-colors">
+            <ArrowRight className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <span className="text-base font-medium text-gray-800">كورساتنا</span>
+              <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-cyan-500" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* ✅ زرار شركاؤنا */}
       <div className="px-4 mt-4">
         <Link to="/partners">
           <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-4 shadow-sm active:bg-gray-50 transition-colors">
