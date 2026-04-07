@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import BottomNavigation from "@/components/BottomNavigation";
+
 
 // ✅ جلب المنتج مباشرة من WooCommerce عبر Vercel proxy
 const fetchProduct = async (id: string) => {
@@ -187,7 +187,7 @@ const Product = () => {
         </div>
       </header>
 
-      <div className="pb-32">
+      <div className="pb-44">
         {/* صورة المنتج */}
         <div className="relative bg-white">
           <div className="relative h-72 overflow-hidden">
@@ -346,8 +346,8 @@ const Product = () => {
         )}
       </div>
 
-      {/* ✅ زرارين ثابتين في الأسفل */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-50">
+      {/* ✅ زرارين ثابتين في الأسفل - فوق الـ BottomNavigation */}
+      <div className="fixed bottom-[65px] left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-[60]">
         <div className="flex gap-3">
           {/* اشتري الآن */}
           <Button
