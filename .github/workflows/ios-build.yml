@@ -14,24 +14,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 20
+      - name: Setup Node 18
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
 
       - name: Install dependencies
-        run: npm install --force
+        run: |
+          npm install --legacy-peer-deps --no-audit --no-fund
+          echo "✅ npm install done"
 
       - name: Build React
-        run: npm run build
+        run: |
+          npm run build
+          echo "✅ Build done"
 
       - name: Sync Capacitor iOS
-        run: npx cap sync ios
+        run: |
+          npx cap sync ios
+          echo "✅ Cap sync done"
 
       - name: Install CocoaPods
         run: |
           cd ios/App
-          pod install --repo-update
+          pod install
+          echo "✅ Pods installed"
 
       - name: Setup Code Signing
         env:
@@ -55,8 +62,9 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: \
             -s -k "pw123" ios-build.keychain
+          security find-identity -v -p codesigning ios-build.keychain
 
-          # Provisioning Profile
+          # Profile
           echo "$PROFILE_BASE64" | base64 --decode > /tmp/build.mobileprovision
           UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' \
             /dev/stdin <<< $(security cms -D -i /tmp/build.mobileprovision))
@@ -64,7 +72,6 @@ jobs:
           cp /tmp/build.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
           echo "✅ Code signing ready | UUID: $UUID"
-          security find-identity -v -p codesigning ios-build.keychain
 
       - name: Build Archive
         run: |
@@ -80,13 +87,9 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="Building Station App Store" \
             DEVELOPMENT_TEAM=RH8HBHDA3T \
             OTHER_CODE_SIGN_FLAGS="--keychain ios-build.keychain" \
-            2>&1 | grep -E "(error:|BUILD SUCCEEDED|BUILD FAILED)" | tail -20
+            2>&1 | grep -E "(error:|BUILD SUCCEEDED|BUILD FAILED|warning:)" | tail -30
 
-          if [ ! -d "/tmp/App.xcarchive" ]; then
-            echo "❌ Archive failed"
-            exit 1
-          fi
-          echo "✅ Archive created"
+          [ -d /tmp/App.xcarchive ] && echo "✅ Archive created" || { echo "❌ Archive failed"; exit 1; }
 
       - name: Export IPA
         run: |
@@ -104,6 +107,7 @@ jobs:
             </dict>
           </dict></plist>
           PLIST
+
           mkdir -p /tmp/ipa
           xcodebuild -exportArchive \
             -archivePath /tmp/App.xcarchive \
@@ -111,18 +115,19 @@ jobs:
             -exportOptionsPlist /tmp/export.plist
           ls /tmp/ipa/
 
-      - name: Upload to App Store Connect
+      - name: Upload to App Store
         env:
           APPLE_USER: ${{ secrets.APP_STORE_CONNECT_USERNAME }}
           APPLE_PASS: ${{ secrets.APP_STORE_CONNECT_APP_SPECIFIC_PASSWORD }}
         run: |
           IPA=$(find /tmp/ipa -name "*.ipa" | head -1)
+          echo "Uploading: $IPA"
           xcrun altool --upload-app --type ios \
             --file "$IPA" \
             --username "$APPLE_USER" \
             --password "$APPLE_PASS"
 
-      - name: Save IPA Artifact
+      - name: Save IPA
         uses: actions/upload-artifact@v4
         if: always()
         with:
