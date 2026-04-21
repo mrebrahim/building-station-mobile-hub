@@ -1,22 +1,28 @@
 workflows:
-  ios-release:
-    name: iOS Release (App Store)
+
+  # ✅ iOS App Store Build
+  ios-app-store:
+    name: iOS App Store
     max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Building_Station_ASC
+
     environment:
-      node: 20.0.0
-      xcode: latest
-      cocoapods: default
-      vars:
-        APP_ID: com.buildingstation.app
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.buildingstation.app
+      node: 20.17.0
+      vars:
+        APP_ID: com.buildingstation.app
+        APP_NAME: "Building Station"
+        BUNDLE_ID: com.buildingstation.app
 
     scripts:
-      - name: Install dependencies
+      - name: Install npm dependencies
         script: npm ci --legacy-peer-deps
 
-      - name: Build React app
+      - name: Build React/Vite app
         script: npm run build
 
       - name: Capacitor sync iOS
@@ -26,6 +32,11 @@ workflows:
         script: |
           cd ios/App
           pod install
+
+      - name: Set build number
+        script: |
+          BUILD_NUMBER=$(($PROJECT_BUILD_NUMBER))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/App/App/Info.plist
 
       - name: Build iOS IPA
         script: |
@@ -37,40 +48,59 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        auth: integration
         submit_to_testflight: true
+        submit_to_app_store: false
+        beta_groups:
+          - App Store Connect Users
 
-  android-release:
-    name: Android Release (Google Play)
+  # ✅ Android Google Play Build
+  android-google-play:
+    name: Android Google Play
     max_build_duration: 60
+    instance_type: linux_x2
+
     environment:
-      node: 20.0.0
-      java: 17
+      android_signing:
+        - building_station_keystore
+      node: 20.17.0
+      vars:
+        PACKAGE_NAME: com.buildingstation.app
 
     scripts:
-      - name: Install dependencies
+      - name: Install npm dependencies
         script: npm ci --legacy-peer-deps
 
-      - name: Build React app
+      - name: Build React/Vite app
         script: npm run build
 
       - name: Capacitor sync Android
         script: npx cap sync android
 
+      - name: Set build number
+        script: |
+          BUILD_NUMBER=$(($PROJECT_BUILD_NUMBER))
+          sed -i "s/versionCode .*/versionCode $BUILD_NUMBER/" android/app/build.gradle
+
       - name: Build Android AAB
         script: |
           cd android
-          ./gradlew bundleRelease
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$CM_KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
 
     artifacts:
       - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/*.apk
 
     publishing:
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
+        submit_as_draft: true
