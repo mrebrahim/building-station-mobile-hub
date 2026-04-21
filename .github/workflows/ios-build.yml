@@ -1,8 +1,6 @@
 name: iOS App Store Build
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -14,31 +12,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+      - name: System Info
+        run: |
+          echo "Node: $(node -v)"
+          echo "NPM: $(npm -v)"
+          echo "Xcode: $(xcodebuild -version | head -1)"
 
       - name: Install dependencies
-        run: |
-          npm install --legacy-peer-deps --no-audit --no-fund
-          echo "✅ npm install done"
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: Build React
-        run: |
-          npm run build
-          echo "✅ Build done"
+        run: npm run build
 
       - name: Sync Capacitor iOS
-        run: |
-          npx cap sync ios
-          echo "✅ Cap sync done"
+        run: npx cap sync ios
 
       - name: Install CocoaPods
         run: |
           cd ios/App
           pod install
-          echo "✅ Pods installed"
 
       - name: Setup Code Signing
         env:
@@ -46,7 +38,6 @@ jobs:
           P12_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_P12_PASSWORD }}
           PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
         run: |
-          # Certificate
           echo "$P12_BASE64" | base64 --decode > /tmp/cert.p12
           security create-keychain -p "pw123" ios-build.keychain
           security list-keychains -d user -s ios-build.keychain $(security list-keychains -d user | tr -d '"')
@@ -63,15 +54,13 @@ jobs:
             -S apple-tool:,apple:,codesign: \
             -s -k "pw123" ios-build.keychain
           security find-identity -v -p codesigning ios-build.keychain
-
-          # Profile
           echo "$PROFILE_BASE64" | base64 --decode > /tmp/build.mobileprovision
           UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' \
             /dev/stdin <<< $(security cms -D -i /tmp/build.mobileprovision))
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp /tmp/build.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
-          echo "✅ Code signing ready | UUID: $UUID"
+          echo "✅ Profile UUID: $UUID"
 
       - name: Build Archive
         run: |
@@ -87,9 +76,8 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="Building Station App Store" \
             DEVELOPMENT_TEAM=RH8HBHDA3T \
             OTHER_CODE_SIGN_FLAGS="--keychain ios-build.keychain" \
-            2>&1 | grep -E "(error:|BUILD SUCCEEDED|BUILD FAILED|warning:)" | tail -30
-
-          [ -d /tmp/App.xcarchive ] && echo "✅ Archive created" || { echo "❌ Archive failed"; exit 1; }
+            2>&1 | grep -E "(error:|BUILD SUCCEEDED|BUILD FAILED)" | tail -20
+          [ -d /tmp/App.xcarchive ] && echo "✅ Archive OK" || { echo "❌ Archive failed"; exit 1; }
 
       - name: Export IPA
         run: |
@@ -107,7 +95,6 @@ jobs:
             </dict>
           </dict></plist>
           PLIST
-
           mkdir -p /tmp/ipa
           xcodebuild -exportArchive \
             -archivePath /tmp/App.xcarchive \
@@ -121,7 +108,6 @@ jobs:
           APPLE_PASS: ${{ secrets.APP_STORE_CONNECT_APP_SPECIFIC_PASSWORD }}
         run: |
           IPA=$(find /tmp/ipa -name "*.ipa" | head -1)
-          echo "Uploading: $IPA"
           xcrun altool --upload-app --type ios \
             --file "$IPA" \
             --username "$APPLE_USER" \
@@ -131,6 +117,6 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iOS-Build-${{ github.run_number }}
+          name: iOS-${{ github.run_number }}
           path: /tmp/ipa/*.ipa
           if-no-files-found: warn
