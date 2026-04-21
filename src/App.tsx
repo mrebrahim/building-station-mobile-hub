@@ -1,5 +1,7 @@
 
 import { useRealTimeUpdates } from "@/hooks/useWooCommerceData";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useNativeFeatures } from "@/hooks/useNativeFeatures";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,6 +34,13 @@ import AboutUs from "./pages/AboutUs";
 import MyCourses from "./pages/MyCourses";
 import AllCourses from "./pages/AllCourses";
 import BottomNavigation from "./components/BottomNavigation";
+
+// ✅ Native features provider
+const NativeProvider = ({ children }: { children: React.ReactNode }) => {
+  useNativeFeatures();
+  usePushNotifications();
+  return <>{children}</>;
+};
 
 // Component to handle real-time updates
 const RealTimeProvider = ({ children }: { children: React.ReactNode }) => {
@@ -82,6 +91,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <NativeProvider>
     <RealTimeProvider>
       <TooltipProvider>
         <Toaster />
@@ -119,6 +129,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </RealTimeProvider>
+    </NativeProvider>
   </QueryClientProvider>
 );
 
