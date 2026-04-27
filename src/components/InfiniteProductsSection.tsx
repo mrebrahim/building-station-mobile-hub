@@ -14,8 +14,8 @@ interface Product {
   stock_status?: string;
 }
 
-// ✅ جلب المنتجات من WooCommerce API مباشرة
-const fetchProductsFromWC = async (page: number, limit: number): Promise<Product[]> => {
+// ✅ جلب المنتجات من WooCommerce API - مع فلتر التصنيف لو موجود
+const fetchProductsFromWC = (categoryId?: number) => async (page: number, limit: number): Promise<Product[]> => {
   const url = new URL('/api/woocommerce', window.location.origin);
   url.searchParams.append('endpoint', 'products');
   url.searchParams.append('per_page', String(limit));
@@ -23,6 +23,9 @@ const fetchProductsFromWC = async (page: number, limit: number): Promise<Product
   url.searchParams.append('status', 'publish');
   url.searchParams.append('orderby', 'date');
   url.searchParams.append('order', 'desc');
+  if (categoryId) {
+    url.searchParams.append('category', String(categoryId));
+  }
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error('فشل تحميل المنتجات');
@@ -42,10 +45,11 @@ const fetchProductsFromWC = async (page: number, limit: number): Promise<Product
 
 interface InfiniteProductsSectionProps {
   title?: string;
+  categoryId?: number;
 }
 
-const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: InfiniteProductsSectionProps) => {
-  const fetchProducts = useCallback(fetchProductsFromWC, []);
+const InfiniteProductsSection = ({ title = "كتالوج المنتجات", categoryId }: InfiniteProductsSectionProps) => {
+  const fetchProducts = useCallback(fetchProductsFromWC(categoryId), [categoryId]);
 
   const {
     products,
@@ -56,6 +60,20 @@ const InfiniteProductsSection = ({ title = "كتالوج المنتجات" }: In
     loadMore,
     retry
   } = useInfiniteScroll(fetchProducts, { pageSize: 20 });
+
+  // ✅ لو الـ categoryId لسه بيتجلب، نستنى
+  if (categoryId === undefined) {
+    return (
+      <section className="py-4 bg-gray-50">
+        <div className="px-4 mb-4">
+          <h2 className="text-lg font-bold text-gray-800 text-right">{title}</h2>
+        </div>
+        <div className="px-4">
+          <ProductSkeletonGrid count={8} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-4 bg-gray-50">
