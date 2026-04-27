@@ -1,4 +1,4 @@
-import { ArrowRight, Share2, Heart, Plus, Minus, ShoppingCart, Zap, ChevronDown } from "lucide-react";
+import { ArrowRight, Share2, Heart, Plus, Minus, ShoppingCart, Zap, ChevronDown, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
@@ -349,29 +349,46 @@ const Product = () => {
       {/* ✅ زرارين ثابتين في الأسفل - فوق الـ BottomNavigation */}
       <div className="fixed bottom-[65px] left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-[60]">
         <div className="flex gap-3">
-          {/* اشتري الآن */}
-          <Button
-            onClick={handleBuyNow}
-            disabled={!isInStock() || (isVariable && !selectedVariation)}
-            className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-base rounded-xl gap-2 disabled:opacity-50"
-          >
-            <Zap className="w-5 h-5" />
-            اشتري الآن
-          </Button>
+          {product.type === 'external' && product.external_url ? (
+            /* ✅ زرار Affiliate / External */
+            <a
+              href={product.external_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+            >
+              <Button className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-base rounded-xl gap-2">
+                <ExternalLink className="w-5 h-5" />
+                {product.button_text || 'زيارة الموقع'}
+              </Button>
+            </a>
+          ) : (
+            <>
+              {/* اشتري الآن */}
+              <Button
+                onClick={handleBuyNow}
+                disabled={!isInStock() || (isVariable && !selectedVariation)}
+                className="flex-1 h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-base rounded-xl gap-2 disabled:opacity-50"
+              >
+                <Zap className="w-5 h-5" />
+                اشتري الآن
+              </Button>
 
-          {/* إضافة للسلة */}
-          <Button
-            onClick={handleAddToCart}
-            disabled={!isInStock() || (isVariable && !selectedVariation)}
-            className="flex-1 h-12 bg-white hover:bg-gray-50 text-cyan-500 font-bold text-base rounded-xl border-2 border-cyan-500 gap-2 disabled:opacity-50"
-          >
-            <ShoppingCart className="w-5 h-5" />
-            إضافة للسلة
-          </Button>
+              {/* إضافة للسلة */}
+              <Button
+                onClick={handleAddToCart}
+                disabled={!isInStock() || (isVariable && !selectedVariation)}
+                className="flex-1 h-12 bg-white hover:bg-gray-50 text-cyan-500 font-bold text-base rounded-xl border-2 border-cyan-500 gap-2 disabled:opacity-50"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                إضافة للسلة
+              </Button>
+            </>
+          )}
         </div>
 
         {/* تنبيه لو variable ومش اختار */}
-        {isVariable && !selectedVariation && (
+        {isVariable && !selectedVariation && product.type !== 'external' && (
           <p className="text-xs text-center text-orange-500 mt-1">اختر المواصفات أولاً للمتابعة</p>
         )}
       </div>
