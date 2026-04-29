@@ -40,7 +40,7 @@ const Categories = () => {
   });
 
   const parentCategories = allCategories
-    .filter(cat => cat.parent === 0)
+    .filter(cat => cat.parent === 0 && cat.slug !== 'main')
     .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
   const getSubCategories = (parentId: number) =>
