@@ -59,7 +59,11 @@ const Index = () => {
           isFeatured={true}
         />
       )}
-      <InfiniteProductsSection title="كتالوج المنتجات" categoryId={mainCategoryId ?? undefined} />
+      <InfiniteProductsSection
+        key={mainCategoryId ?? 'pending'}
+        title="كتالوج المنتجات"
+        categoryId={mainCategoryId ?? undefined}
+      />
       <BottomNavigation />
     </div>
   );
