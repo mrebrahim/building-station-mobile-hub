@@ -77,24 +77,24 @@ const Categories = () => {
                       }
                     }}
                   >
+                    <span className="text-base font-medium text-gray-800">{category.name}</span>
                     <div className="text-gray-400 w-6 flex justify-center">
                       {hasSubCategories && (
                         isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />
                       )}
                     </div>
-                    <span className="text-base font-medium text-gray-800">{category.name}</span>
                   </div>
 
                   {hasSubCategories && isExpanded && (
                     <div className="bg-gray-50">
                       {subCategories.map((sub) => (
                         <Link key={sub.id} to={`/category/${sub.id}`}
-                          className="flex items-center justify-end px-8 py-3 border-b border-gray-100 last:border-b-0 active:bg-gray-100 transition-colors">
+                          className="flex items-center justify-start px-8 py-3 border-b border-gray-100 last:border-b-0 active:bg-gray-100 transition-colors">
                           <span className="text-sm text-gray-700">{sub.name}</span>
                         </Link>
                       ))}
                       <Link to={`/category/${category.id}`}
-                        className="flex items-center justify-end px-8 py-3 active:bg-gray-100 transition-colors">
+                        className="flex items-center justify-start px-8 py-3 active:bg-gray-100 transition-colors">
                         <span className="text-sm text-red-500 font-medium">عرض الكل ›</span>
                       </Link>
                     </div>
