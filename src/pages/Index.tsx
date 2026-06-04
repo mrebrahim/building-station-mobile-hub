@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Banner from "@/components/Banner";
-import BrandsSection from "@/components/BrandsSection";
 import ProductCard from "@/components/ProductCard";
 import { ProductSkeletonGrid } from "@/components/ui/product-skeleton";
 import { Button } from "@/components/ui/button";
@@ -55,7 +54,6 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 rtl font-sans">
       <Header />
       <Banner />
-      <BrandsSection />
 
       <section className="py-4 bg-gray-50">
         <div className="px-4 mb-4">
