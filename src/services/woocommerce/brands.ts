@@ -1,6 +1,3 @@
-
-import { apiClient } from './api';
-
 interface Brand {
   id: number;
   name: string;
@@ -21,55 +18,51 @@ interface BrandParams {
   order?: 'asc' | 'desc';
 }
 
+const transformBrand = (apiBrand: any): Brand => {
+  let imageData: Brand['image'] | undefined;
+  const rawImage = apiBrand.image;
+  if (rawImage && typeof rawImage === 'object' && rawImage.src && rawImage.src !== '') {
+    imageData = {
+      id: rawImage.id || 0,
+      src: rawImage.src,
+      alt: rawImage.alt || apiBrand.name,
+    };
+  } else if (apiBrand.thumbnail && typeof apiBrand.thumbnail === 'string' && apiBrand.thumbnail !== '') {
+    imageData = { id: 0, src: apiBrand.thumbnail, alt: apiBrand.name };
+  }
+
+  return {
+    id: apiBrand.id,
+    name: apiBrand.name,
+    slug: apiBrand.slug,
+    description: apiBrand.description || '',
+    image: imageData,
+    count: apiBrand.count || 0,
+  };
+};
+
+const fetchBrandsFromProxy = async (params: BrandParams, namespace?: string): Promise<any[]> => {
+  const url = new URL('/api/woocommerce', window.location.origin);
+  url.searchParams.append('endpoint', 'products/brands');
+  if (namespace) url.searchParams.append('namespace', namespace);
+  if (params.page) url.searchParams.append('page', String(params.page));
+  if (params.per_page) url.searchParams.append('per_page', String(params.per_page));
+  url.searchParams.append('orderby', params.orderby || 'name');
+  url.searchParams.append('order', params.order || 'asc');
+
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`Brands proxy failed: ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
 export class BrandsService {
   async getBrands(params: BrandParams = {}): Promise<Brand[]> {
     try {
-      const searchParams = new URLSearchParams();
-      
-      if (params.page) searchParams.append('page', params.page.toString());
-      if (params.per_page) searchParams.append('per_page', params.per_page.toString());
-      if (params.orderby) searchParams.append('orderby', params.orderby);
-      if (params.order) searchParams.append('order', params.order);
-
-      const queryString = searchParams.toString();
-      const endpoint = `/products/brands${queryString ? `?${queryString}` : ''}`;
-      
-      console.log('Attempting to fetch brands from endpoint:', endpoint);
-      const data = await apiClient.makeRequest(endpoint);
-      
-      // Transform the API response to match our Brand interface
-      const transformedBrands = data.map((apiBrand: any) => {
-        console.log('Processing brand:', apiBrand.name, 'Image data:', apiBrand.image);
-        
-        // Handle different image data structures from WooCommerce API
-        let imageData = undefined;
-        if (apiBrand.image && 
-            apiBrand.image.src && 
-            apiBrand.image.src !== '' && 
-            apiBrand.image._type !== 'undefined' &&
-            apiBrand.image.value !== 'undefined') {
-          imageData = {
-            id: apiBrand.image.id || 0,
-            src: apiBrand.image.src,
-            alt: apiBrand.image.alt || apiBrand.name
-          };
-        }
-        
-        return {
-          id: apiBrand.id,
-          name: apiBrand.name,
-          slug: apiBrand.slug,
-          description: apiBrand.description,
-          image: imageData,
-          count: apiBrand.count || 0
-        };
-      });
-      
-      console.log('Successfully fetched and transformed brands:', transformedBrands);
-      return transformedBrands;
-    } catch (error) {
-      console.log('Brands API failed, returning empty array due to error:', error.message);
-      // Return empty array when API fails
+      const data = await fetchBrandsFromProxy(params);
+      return data.map(transformBrand);
+    } catch (error: any) {
+      console.error('Brands fetch failed:', error?.message);
       return [];
     }
   }
