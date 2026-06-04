@@ -3,9 +3,46 @@ import { ArrowRight, ChevronDown, ChevronUp, Users, GraduationCap } from "lucide
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
-import { categoriesService } from "@/services/woocommerce/categories";
 
-const fetchAllCategories = () => categoriesService.getCategories({ per_page: 300 });
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  parent: number;
+  count: number;
+  image?: { src: string; alt: string };
+}
+
+const fetchCategoriesPage = async (page: number): Promise<any[]> => {
+  const url = new URL('/api/woocommerce', window.location.origin);
+  url.searchParams.append('endpoint', 'products/categories');
+  url.searchParams.append('per_page', '100');
+  url.searchParams.append('page', String(page));
+  url.searchParams.append('orderby', 'name');
+  url.searchParams.append('order', 'asc');
+  url.searchParams.append('hide_empty', 'false');
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch categories');
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+};
+
+const fetchAllCategories = async (): Promise<Category[]> => {
+  const all: any[] = [];
+  for (let page = 1; page <= 10; page++) {
+    const batch = await fetchCategoriesPage(page);
+    all.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return all.map((cat: any) => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    parent: cat.parent || 0,
+    count: cat.count || 0,
+    image: cat.image ? { src: cat.image.src, alt: cat.image.alt || cat.name } : undefined,
+  }));
+};
 
 const Categories = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -19,12 +56,12 @@ const Categories = () => {
   });
 
   const parentCategories = allCategories
-    .filter(cat => (cat.parent ?? 0) === 0 && cat.slug !== 'main' && cat.name?.trim().toLowerCase() !== 'main')
+    .filter(cat => cat.parent === 0 && cat.slug !== 'main' && cat.name?.trim().toLowerCase() !== 'main')
     .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
   const getSubCategories = (parentId: number) =>
     allCategories
-      .filter(cat => (cat.parent ?? 0) === parentId)
+      .filter(cat => cat.parent === parentId)
       .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
   const toggleCategory = (id: number) => {
