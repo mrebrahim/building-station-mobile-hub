@@ -3,30 +3,9 @@ import { ArrowRight, ChevronDown, ChevronUp, Users, GraduationCap } from "lucide
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
+import { categoriesService } from "@/services/woocommerce/categories";
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  parent: number;
-  count: number;
-  image?: { src: string; alt: string };
-}
-
-const fetchAllCategories = async (): Promise<Category[]> => {
-  const url = `/api/woocommerce?endpoint=products/categories&per_page=100&orderby=name&order=asc`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Failed to fetch categories');
-  const data = await res.json();
-  return data.map((cat: any) => ({
-    id: cat.id,
-    name: cat.name,
-    slug: cat.slug,
-    parent: cat.parent || 0,
-    count: cat.count || 0,
-    image: cat.image ? { src: cat.image.src, alt: cat.image.alt || cat.name } : undefined,
-  }));
-};
+const fetchAllCategories = () => categoriesService.getCategories({ per_page: 300 });
 
 const Categories = () => {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -40,11 +19,13 @@ const Categories = () => {
   });
 
   const parentCategories = allCategories
-    .filter(cat => cat.parent === 0 && cat.slug !== 'main' && cat.name?.trim().toLowerCase() !== 'main')
+    .filter(cat => (cat.parent ?? 0) === 0 && cat.slug !== 'main' && cat.name?.trim().toLowerCase() !== 'main')
     .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
   const getSubCategories = (parentId: number) =>
-    allCategories.filter(cat => cat.parent === parentId);
+    allCategories
+      .filter(cat => (cat.parent ?? 0) === parentId)
+      .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
   const toggleCategory = (id: number) => {
     setExpandedCategories(prev => {
