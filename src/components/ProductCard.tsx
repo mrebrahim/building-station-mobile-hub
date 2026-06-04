@@ -21,6 +21,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
 
+  const displayCategory = product.categories?.find(
+    (c) => c.name?.trim().toLowerCase() !== 'main'
+  );
+
   // Check if product is in favorites when component mounts
   useEffect(() => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
@@ -38,7 +42,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       existingCart.push({
         id: product.id,
         name: product.name,
-        brand: product.categories?.[0]?.name || 'غير محدد',
+        brand: displayCategory?.name || 'غير محدد',
         price: parseFloat(product.price) || 0,
         quantity: 1,
         image: product.images?.[0]?.src || ''
@@ -74,7 +78,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         name: product.name,
         price: product.price,
         image: product.images?.[0]?.src || '',
-        brand: product.categories?.[0]?.name || 'غير محدد'
+        brand: displayCategory?.name || 'غير محدد'
       };
       favorites.push(favoriteProduct);
       localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -120,9 +124,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </Link>
       
       {/* Brand Name */}
-      {product.categories && product.categories.length > 0 && (
+      {displayCategory && (
         <p className="text-[10px] text-gray-400 mb-1 font-medium truncate">
-          {product.categories[0].name}
+          {displayCategory.name}
         </p>
       )}
       
