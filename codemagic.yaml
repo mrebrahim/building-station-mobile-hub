@@ -42,6 +42,17 @@ workflows:
       - name: Initialize keychain
         script: keychain initialize
 
+      - name: Create a new distribution certificate (owned by Codemagic)
+        script: |
+          # Generate a fresh Apple Distribution certificate whose private
+          # key Codemagic controls. Needed because the existing certificate
+          # on Apple has a private key that lives on a different Mac.
+          # Apple allows up to 2 Distribution certificates per team; if we
+          # hit that limit, revoke an old one in the Developer Portal first.
+          app-store-connect create-certificate \
+            --type IOS_DISTRIBUTION \
+            --save || echo "Certificate may already exist for this team; continuing."
+
       - name: Fetch signing files
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
