@@ -42,11 +42,40 @@ workflows:
       - name: Initialize keychain
         script: keychain initialize
 
-      - name: List existing distribution certificates
+      - name: Revoke stale distribution certificates
         script: |
-          echo "=== Existing IOS_DISTRIBUTION certificates on Apple ==="
-          app-store-connect certificates list --certificate-type IOS_DISTRIBUTION || true
-          echo "=== End of list ==="
+          # Each successful build creates a fresh Distribution cert whose
+          # private key only exists inside that build. Apple keeps only one
+          # active Distribution cert per team, so before creating a new
+          # one we revoke whatever's already there — we can't reuse it
+          # anyway, since the private key is long gone.
+          python3 - <<'PYEOF'
+          import json, subprocess
+
+          out = subprocess.run(
+              ["app-store-connect", "certificates", "list",
+               "--certificate-type", "IOS_DISTRIBUTION", "--json"],
+              capture_output=True, text=True,
+          )
+          print("list stdout:", out.stdout[:400])
+          if out.returncode != 0:
+              print("list stderr:", out.stderr[:400])
+              raise SystemExit(0)
+
+          try:
+              certs = json.loads(out.stdout)
+          except json.JSONDecodeError:
+              certs = []
+          if isinstance(certs, dict):
+              certs = certs.get("data", [])
+
+          ids = [c.get("id") for c in certs if isinstance(c, dict) and c.get("id")]
+          print(f"Distribution certificates to revoke: {ids}")
+          for cid in ids:
+              print(f"Revoking {cid}")
+              subprocess.run(["app-store-connect", "certificates", "delete", cid],
+                             check=False)
+          PYEOF
 
       - name: Generate certificate private key
         script: |
@@ -54,8 +83,6 @@ workflows:
 
       - name: Create a new distribution certificate (owned by Codemagic)
         script: |
-          # Generate a fresh Apple Distribution certificate whose private
-          # key was created above. Uses the new (non-deprecated) subcommand.
           app-store-connect certificates create \
             --type IOS_DISTRIBUTION \
             --certificate-key @file:/tmp/cert_private_key.pem \
