@@ -4,6 +4,7 @@ import { ProductSkeletonGrid } from "./ui/product-skeleton";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { Button } from "./ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
+import { wcFetch } from "@/lib/wooProxy";
 
 interface Product {
   id: number;
@@ -14,22 +15,15 @@ interface Product {
   stock_status?: string;
 }
 
-// ✅ جلب المنتجات من WooCommerce API - مع فلتر التصنيف لو موجود
 const fetchProductsFromWC = (categoryId?: number) => async (page: number, limit: number): Promise<Product[]> => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', 'products');
-  url.searchParams.append('per_page', String(limit));
-  url.searchParams.append('page', String(page));
-  url.searchParams.append('status', 'publish');
-  url.searchParams.append('orderby', 'date');
-  url.searchParams.append('order', 'desc');
-  if (categoryId) {
-    url.searchParams.append('category', String(categoryId));
-  }
-
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error('فشل تحميل المنتجات');
-  const data = await res.json();
+  const data = await wcFetch<any[]>('products', {
+    per_page: limit,
+    page,
+    status: 'publish',
+    orderby: 'date',
+    order: 'desc',
+    category: categoryId,
+  });
 
   return (Array.isArray(data) ? data : []).map((p: any) => ({
     id: p.id,

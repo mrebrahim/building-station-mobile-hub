@@ -4,16 +4,10 @@ import { ArrowRight, ExternalLink, GraduationCap, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import BottomNavigation from "@/components/BottomNavigation";
+import { edgeFunctionGet } from "@/lib/wooProxy";
 
 const fetchCourses = async () => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('namespace', 'wp/v2');
-  url.searchParams.append('endpoint', 'courses');
-  url.searchParams.append('per_page', '50');
-  url.searchParams.append('_embed', '1');
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error('Failed to fetch courses');
-  return res.json();
+  return edgeFunctionGet<any[]>('tutor-lms-proxy', { action: 'list' });
 };
 
 const Courses = () => {

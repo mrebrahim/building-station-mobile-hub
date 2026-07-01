@@ -6,25 +6,22 @@ import ProductCard from "@/components/ProductCard";
 import { Input } from "@/components/ui/input";
 import { ProductSkeletonGrid } from "@/components/ui/product-skeleton";
 import BottomNavigation from "@/components/BottomNavigation";
+import { wcFetch } from "@/lib/wooProxy";
 
-// ✅ جلب المنتجات من WooCommerce API
 const fetchCategoryProducts = async (categoryId: string) => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', 'products');
-  url.searchParams.append('category', categoryId);
-  url.searchParams.append('per_page', '50');
-  url.searchParams.append('status', 'publish');
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error('Failed');
-  return res.json();
+  return wcFetch<any[]>('products', {
+    category: categoryId,
+    per_page: 50,
+    status: 'publish',
+  });
 };
 
 const fetchCategory = async (categoryId: string) => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', `products/categories/${categoryId}`);
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
-  return res.json();
+  try {
+    return await wcFetch<any>(`products/categories/${categoryId}`);
+  } catch {
+    return null;
+  }
 };
 
 const CategoryProducts = () => {

@@ -45,15 +45,14 @@ export class CategoriesService {
 
   private async getFromProxy(params: CategoryParams = {}): Promise<Category[]> {
     try {
-      const url = new URL('/api/woocommerce', window.location.origin);
-      url.searchParams.append('endpoint', 'products/categories');
-      url.searchParams.append('per_page', String(params.per_page || 100));
-      if (params.parent !== undefined) url.searchParams.append('parent', String(params.parent));
-      url.searchParams.append('orderby', 'name');
-      url.searchParams.append('order', 'asc');
-      const res = await fetch(url.toString());
-      const data = await res.json();
-      return data.map((cat: any) => ({
+      const { wcFetch } = await import('@/lib/wooProxy');
+      const data = await wcFetch<any[]>('products/categories', {
+        per_page: params.per_page || 100,
+        parent: params.parent,
+        orderby: 'name',
+        order: 'asc',
+      });
+      return (data || []).map((cat: any) => ({
         id: cat.id, name: cat.name, slug: cat.slug,
         description: cat.description || '',
         image: cat.image ? { id: cat.image.id, src: cat.image.src, alt: cat.image.alt || cat.name } : undefined,
