@@ -3,6 +3,7 @@ import { ArrowRight, ChevronDown, ChevronUp, Users, GraduationCap } from "lucide
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
+import { wcFetch } from "@/lib/wooProxy";
 
 interface Category {
   id: number;
@@ -14,11 +15,12 @@ interface Category {
 }
 
 const fetchAllCategories = async (): Promise<Category[]> => {
-  const url = `/api/woocommerce?endpoint=products/categories&per_page=100&orderby=name&order=asc`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Failed to fetch categories');
-  const data = await res.json();
-  return data.map((cat: any) => ({
+  const data = await wcFetch<any[]>('products/categories', {
+    per_page: 100,
+    orderby: 'name',
+    order: 'asc',
+  });
+  return (data || []).map((cat: any) => ({
     id: cat.id,
     name: cat.name,
     slug: cat.slug,

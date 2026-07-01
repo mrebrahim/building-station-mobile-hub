@@ -5,30 +5,28 @@ import BrandsSection from "@/components/BrandsSection";
 import ProductsSection from "@/components/ProductsSection";
 import InfiniteProductsSection from "@/components/InfiniteProductsSection";
 import BottomNavigation from "@/components/BottomNavigation";
+import { wcFetch } from "@/lib/wooProxy";
 
-// ✅ جلب ID تصنيف "main" من WooCommerce
 const fetchMainCategoryId = async (): Promise<number | null> => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', 'products/categories');
-  url.searchParams.append('slug', 'main');
-  url.searchParams.append('per_page', '1');
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data?.[0]?.id ?? null;
+  try {
+    const data = await wcFetch<any[]>('products/categories', { slug: 'main', per_page: 1 });
+    return data?.[0]?.id ?? null;
+  } catch {
+    return null;
+  }
 };
 
-// ✅ جلب المنتجات المميزة من تصنيف main فقط
 const fetchFeaturedProducts = async (categoryId: number) => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', 'products');
-  url.searchParams.append('featured', 'true');
-  url.searchParams.append('category', String(categoryId));
-  url.searchParams.append('per_page', '4');
-  url.searchParams.append('status', 'publish');
-  const res = await fetch(url.toString());
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    return await wcFetch<any[]>('products', {
+      featured: 'true',
+      category: categoryId,
+      per_page: 4,
+      status: 'publish',
+    });
+  } catch {
+    return [];
+  }
 };
 
 const Index = () => {

@@ -1,16 +1,5 @@
 import { Product, ProductParams } from './types';
-
-// ✅ جلب المنتجات من WooCommerce عبر Vercel proxy مباشرة - بدون mock data
-const wcFetch = async (endpoint: string, params: Record<string, any> = {}): Promise<any> => {
-  const url = new URL('/api/woocommerce', window.location.origin);
-  url.searchParams.append('endpoint', endpoint);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== '') url.searchParams.append(k, String(v));
-  });
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`WC API error: ${res.status}`);
-  return res.json();
-};
+import { wcFetch } from '@/lib/wooProxy';
 
 const transformProduct = (p: any): Product => ({
   id: p.id,

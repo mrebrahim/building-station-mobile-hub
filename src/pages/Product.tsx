@@ -4,19 +4,18 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { wcFetch } from "@/lib/wooProxy";
 
-
-// ✅ جلب المنتج مباشرة من WooCommerce عبر Vercel proxy
 const fetchProduct = async (id: string) => {
-  const res = await fetch(`/api/woocommerce?endpoint=products/${id}`);
-  if (!res.ok) throw new Error('Product not found');
-  return res.json();
+  return wcFetch<any>(`products/${id}`);
 };
 
 const fetchRelated = async (categoryId: number, excludeId: number) => {
-  const res = await fetch(`/api/woocommerce?endpoint=products&category=${categoryId}&per_page=4&exclude=${excludeId}`);
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    return await wcFetch<any[]>('products', { category: categoryId, per_page: 4, exclude: excludeId });
+  } catch {
+    return [];
+  }
 };
 
 const Product = () => {
@@ -41,9 +40,11 @@ const Product = () => {
   const { data: variations = [] } = useQuery({
     queryKey: ['variations', id],
     queryFn: async () => {
-      const res = await fetch(`/api/woocommerce?endpoint=products/${id}/variations&per_page=100`);
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await wcFetch<any[]>(`products/${id}/variations`, { per_page: 100 });
+      } catch {
+        return [];
+      }
     },
     enabled: !!product && product.type === 'variable',
   });

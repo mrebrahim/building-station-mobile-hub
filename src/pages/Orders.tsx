@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/BottomNavigation";
+import { wcFetch } from "@/lib/wooProxy";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending:    { label: "قيد الانتظار", color: "text-yellow-600 bg-yellow-50", icon: Clock },
@@ -26,11 +27,12 @@ const Orders = () => {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(
-        `/api/woocommerce?endpoint=orders&search=${encodeURIComponent(email)}&per_page=20&orderby=date&order=desc`
-      );
-      if (!res.ok) throw new Error('Failed');
-      const data = await res.json();
+      const data = await wcFetch<any[]>('orders', {
+        search: email,
+        per_page: 20,
+        orderby: 'date',
+        order: 'desc',
+      });
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       setOrders([]);
