@@ -42,16 +42,20 @@ workflows:
       - name: Initialize keychain
         script: keychain initialize
 
+      - name: List existing distribution certificates
+        script: |
+          echo "=== Existing IOS_DISTRIBUTION certificates on Apple ==="
+          app-store-connect list-certificates --type IOS_DISTRIBUTION || true
+          echo "=== End of list ==="
+
       - name: Create a new distribution certificate (owned by Codemagic)
         script: |
           # Generate a fresh Apple Distribution certificate whose private
-          # key Codemagic controls. Needed because the existing certificate
-          # on Apple has a private key that lives on a different Mac.
-          # Apple allows up to 2 Distribution certificates per team; if we
-          # hit that limit, revoke an old one in the Developer Portal first.
+          # key Codemagic controls. If Apple's 2-certificate limit is hit,
+          # this fails loudly so we see the real error instead of hiding it.
           app-store-connect create-certificate \
             --type IOS_DISTRIBUTION \
-            --save || echo "Certificate may already exist for this team; continuing."
+            --save
 
       - name: Fetch signing files
         script: |
