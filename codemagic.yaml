@@ -13,7 +13,7 @@ workflows:
         BUNDLE_ID: "com.buildingstation.app"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
-      node: 20.17.0
+      node: 22
       xcode: latest
       cocoapods: default
 
@@ -79,7 +79,7 @@ workflows:
     environment:
       android_signing:
         - building_station_keystore
-      node: 20.17.0
+      node: 22
       java: 17
 
     scripts:
