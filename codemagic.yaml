@@ -45,37 +45,27 @@ workflows:
       - name: Revoke stale distribution certificates
         script: |
           # Each successful build creates a fresh Distribution cert whose
-          # private key only exists inside that build. Apple keeps only one
-          # active Distribution cert per team, so before creating a new
-          # one we revoke whatever's already there — we can't reuse it
-          # anyway, since the private key is long gone.
-          python3 - <<'PYEOF'
-          import json, subprocess
+          # private key only exists inside that build's storage. Apple
+          # keeps only one active Distribution cert per team, so before
+          # 'certificates create' we clear the slate — we can't reuse the
+          # previous cert anyway (its private key is long gone).
+          set +e
+          echo "=== Listing IOS_DISTRIBUTION certificates ==="
+          LIST_OUTPUT=$(app-store-connect certificates list --certificate-type IOS_DISTRIBUTION 2>&1)
+          echo "$LIST_OUTPUT"
+          echo "=== End of list ==="
 
-          out = subprocess.run(
-              ["app-store-connect", "certificates", "list",
-               "--certificate-type", "IOS_DISTRIBUTION", "--json"],
-              capture_output=True, text=True,
-          )
-          print("list stdout:", out.stdout[:400])
-          if out.returncode != 0:
-              print("list stderr:", out.stderr[:400])
-              raise SystemExit(0)
-
-          try:
-              certs = json.loads(out.stdout)
-          except json.JSONDecodeError:
-              certs = []
-          if isinstance(certs, dict):
-              certs = certs.get("data", [])
-
-          ids = [c.get("id") for c in certs if isinstance(c, dict) and c.get("id")]
-          print(f"Distribution certificates to revoke: {ids}")
-          for cid in ids:
-              print(f"Revoking {cid}")
-              subprocess.run(["app-store-connect", "certificates", "delete", cid],
-                             check=False)
-          PYEOF
+          # Codemagic CLI prints one 'Id: XXXX' per record in plain text output.
+          IDS=$(echo "$LIST_OUTPUT" | awk '/^Id:/ {print $2}')
+          if [ -z "$IDS" ]; then
+            echo "No existing Distribution certificates to revoke."
+          else
+            for id in $IDS; do
+              echo "--- Revoking $id ---"
+              app-store-connect certificates delete "$id"
+            done
+          fi
+          exit 0
 
       - name: Generate certificate private key
         script: |
