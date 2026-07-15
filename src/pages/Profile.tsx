@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, HelpCircle, Users, LogOut, LogIn, User, Mail, Phone } from "lucide-react";
+import { ArrowLeft, HelpCircle, Users, LogOut, LogIn, User, Mail, Phone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Link, useNavigate } from "react-router-dom";
 import HelpButton from "@/components/HelpButton";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,10 +38,34 @@ const Profile = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const [deleting, setDeleting] = useState(false);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success('تم تسجيل الخروج بنجاح');
     setUser(null);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-account', {
+        body: {},
+      });
+      if (error) {
+        toast.error('فشل حذف الحساب: ' + error.message);
+        return;
+      }
+      await supabase.auth.signOut();
+      setUser(null);
+      toast.success('تم حذف حسابك بشكل نهائي');
+      navigate('/');
+    } catch (err: any) {
+      toast.error('حدث خطأ غير متوقع: ' + (err?.message || ''));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -106,6 +141,41 @@ const Profile = () => {
               <LogOut className="w-5 h-5 ml-2" />
               تسجيل الخروج
             </Button>
+
+            {/* زرار حذف الحساب — مطلوب من Apple (Guideline 5.1.1(v)) */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full mt-3 border-red-200 bg-white text-red-600 hover:bg-red-50 py-4 rounded-xl text-base font-bold"
+                >
+                  <Trash2 className="w-5 h-5 ml-2" />
+                  حذف الحساب نهائياً
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rtl text-right">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-right">حذف الحساب نهائياً؟</AlertDialogTitle>
+                  <AlertDialogDescription className="text-right leading-7">
+                    هذا الإجراء لا يمكن التراجع عنه. سيتم حذف حسابك بشكل دائم من Building Station،
+                    وستفقد كل بياناتك المرتبطة به (بيانات الحساب، تفضيلاتك، وسجل الإشعارات).
+                    <br />
+                    <br />
+                    ملاحظة: طلباتك السابقة والفواتير قد تظل محفوظة لدى المتجر لأغراض قانونية ومحاسبية.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-row-reverse gap-2">
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {deleting ? 'جاري الحذف...' : 'نعم، احذف حسابي'}
+                  </AlertDialogAction>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         ) : (
           /* ✅ المستخدم غير مسجّل */
